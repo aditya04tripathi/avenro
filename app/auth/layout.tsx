@@ -2,14 +2,15 @@ import Image from "next/image"
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <main className="flex h-screen w-full">
-      <aside className="h-full w-1/2">
+    <main className="flex w-full h-screen">
+      <aside className="w-1/2 h-full">
         <Image
           src="/images/auth-background.jpg"
           alt="Auth Background"
           width={1000}
           height={1000}
-          className="h-full w-full object-cover"
+          className="object-cover w-full h-full"
+          loading="eager"
         />
       </aside>
       {children}
