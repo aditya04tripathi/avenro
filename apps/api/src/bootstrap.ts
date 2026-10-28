@@ -22,6 +22,7 @@ import {
   parseTrustedOrigins,
   parseTrustedProxies,
 } from './config/environment.js';
+import { configureOpenApi } from './openapi/openapi.js';
 
 export async function createApplication<T>(
   module: Type<T>,
@@ -133,6 +134,7 @@ export function configureApplication(
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());
+  configureOpenApi(app, environment);
 
   const server = app.getHttpServer();
   server.requestTimeout = 30_000;

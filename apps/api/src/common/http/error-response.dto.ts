@@ -1,7 +1,31 @@
-export class ErrorResponseDto {
-  statusCode!: number;
+import {
+  ApiExtraModels,
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+
+export class ErrorFieldDto {
+  path!: string;
+
   code!: string;
+
   message!: string;
+}
+
+@ApiExtraModels(ErrorFieldDto)
+export class ErrorResponseDto {
+  @ApiProperty()
+  statusCode!: number;
+
+  @ApiProperty()
+  code!: string;
+
+  @ApiProperty()
+  message!: string;
+
+  @ApiProperty()
   requestId!: string;
-  fieldErrors?: Array<{ path: string; code: string; message: string }>;
+
+  @ApiPropertyOptional({ type: ErrorFieldDto, isArray: true })
+  fieldErrors?: ErrorFieldDto[];
 }
