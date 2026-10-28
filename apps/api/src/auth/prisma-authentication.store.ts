@@ -5,6 +5,8 @@ import {
   type EmailTokenStore,
   type MagicLinkRecord,
   type MagicLinkStore,
+  type OidcStateStore,
+  type OidcTransaction,
   type RefreshTokenRecord,
   type RefreshTokenStore,
   type SessionRecord,
@@ -29,7 +31,12 @@ function withoutNulls<T extends object>(row: T): WithoutNulls<T> {
 
 @Injectable()
 export class PrismaAuthenticationStore
-  implements SessionStore, RefreshTokenStore, MagicLinkStore, EmailTokenStore
+  implements
+    SessionStore,
+    RefreshTokenStore,
+    MagicLinkStore,
+    EmailTokenStore,
+    OidcStateStore
 {
   private readonly maxPending: number = 100_000;
 
@@ -42,6 +49,7 @@ export class PrismaAuthenticationStore
       refreshTokens: this,
       magicLinks: this,
       emailTokens: this,
+      oidcStates: this,
     });
   }
 
@@ -324,6 +332,69 @@ export class PrismaAuthenticationStore
     await this.prisma.emailToken.deleteMany({
       where: { userId, purpose },
     });
+  }
+
+  async saveOidcState(transaction: OidcTransaction): Promise<void> {
+    await this.prisma.oidcLogin.create({
+      data: {
+        state: transaction.state,
+        provider: transaction.provider,
+        nonce: transaction.nonce ?? null,
+        codeVerifier: transaction.codeVerifier,
+        redirectTo: transaction.redirectTo ?? null,
+        userId: transaction.link?.userId ?? null,
+        sessionId: transaction.link?.sessionId ?? null,
+        createdAt: transaction.createdAt,
+        expiresAt: transaction.expiresAt,
+      },
+    });
+    await this.prisma.oidcLogin.deleteMany({
+      where: { expiresAt: { lte: transaction.createdAt } },
+    });
+    const cutoff = await this.prisma.oidcLogin.findMany({
+      select: { expiresAt: true },
+      orderBy: { expiresAt: 'desc' },
+      take: 1,
+      skip: this.maxPending,
+    });
+    if (cutoff[0]) {
+      await this.prisma.oidcLogin.deleteMany({
+        where: { expiresAt: { lte: cutoff[0].expiresAt } },
+      });
+    }
+  }
+
+  async consumeOidcState(state: string): Promise<OidcTransaction | undefined> {
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        state: string;
+        provider: string;
+        nonce: string | null;
+        codeVerifier: string;
+        redirectTo: string | null;
+        userId: string | null;
+        sessionId: string | null;
+        createdAt: Date;
+        expiresAt: Date;
+      }>
+    >`DELETE FROM "oidc_logins" WHERE "state" = ${state} RETURNING "state", "provider", "nonce", "codeVerifier", "redirectTo", "userId", "sessionId", "createdAt", "expiresAt"`;
+    const row = rows[0];
+    if (!row) {
+      return undefined;
+    }
+    return {
+      state: row.state,
+      provider: row.provider,
+      nonce: row.nonce ?? undefined,
+      codeVerifier: row.codeVerifier,
+      redirectTo: row.redirectTo ?? undefined,
+      link:
+        row.userId && row.sessionId
+          ? { userId: row.userId, sessionId: row.sessionId }
+          : undefined,
+      createdAt: row.createdAt,
+      expiresAt: row.expiresAt,
+    };
   }
 
   private async trimMagicLinks(now: Date): Promise<void> {

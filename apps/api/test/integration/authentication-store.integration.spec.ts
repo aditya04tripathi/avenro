@@ -1,8 +1,12 @@
 import {
   AuthenticationStorage,
+  type EmailTokenRecord,
+  type OidcTransaction,
   type SessionRecord,
 } from '@nestjs/authentication';
 import { authenticationStoreContract } from '@nestjs/authentication/testing';
+
+import { randomUUID } from 'node:crypto';
 
 import { PrismaAuthenticationStore } from '../../src/auth/prisma-authentication.store.js';
 import type { PrismaService } from '../../src/prisma/prisma.service.js';
@@ -85,3 +89,70 @@ class ContractSessionStore {
     return this.store.deleteUserSessions(userId);
   }
 }
+
+describe.skipIf(!databaseUrl)('PostgreSQL authentication token stores', () => {
+  let tokenDatabase: ReturnType<typeof createDisposableTestDatabase>;
+  let tokenStore: PrismaAuthenticationStore;
+
+  beforeAll(() => {
+    tokenDatabase = createDisposableTestDatabase();
+    tokenStore = new PrismaAuthenticationStore(
+      tokenDatabase.client as unknown as PrismaService,
+      new AuthenticationStorage(),
+    );
+  });
+
+  afterAll(async () => {
+    await tokenDatabase?.cleanup();
+  });
+
+  it('consumes email tokens atomically and only for their purpose', async () => {
+    const userId = randomUUID();
+    const tokenId = randomUUID();
+    const now = new Date();
+    const email = `${userId}@token-test.invalid`;
+    await tokenDatabase.client.user.create({
+      data: { id: userId, email },
+      select: { id: true },
+    });
+    const token: EmailTokenRecord = {
+      id: tokenId,
+      purpose: 'password-reset',
+      userId,
+      email,
+      createdAt: now,
+      expiresAt: new Date(now.getTime() + 60_000),
+    };
+    await tokenStore.saveEmailToken(token);
+
+    await expect(
+      tokenStore.consumeEmailToken(tokenId, 'email-verification'),
+    ).resolves.toBeUndefined();
+    const consumed = await Promise.all([
+      tokenStore.consumeEmailToken(tokenId, 'password-reset'),
+      tokenStore.consumeEmailToken(tokenId, 'password-reset'),
+    ]);
+    expect(consumed.filter(Boolean)).toHaveLength(1);
+    expect(consumed.find(Boolean)).toMatchObject(token);
+  });
+
+  it('consumes a persisted OIDC transaction exactly once', async () => {
+    const transaction: OidcTransaction = {
+      state: randomUUID(),
+      provider: 'google',
+      nonce: randomUUID(),
+      codeVerifier: randomUUID(),
+      redirectTo: '/settings',
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 60_000),
+    };
+    await tokenStore.saveOidcState(transaction);
+
+    const consumed = await Promise.all([
+      tokenStore.consumeOidcState(transaction.state),
+      tokenStore.consumeOidcState(transaction.state),
+    ]);
+    expect(consumed.filter(Boolean)).toHaveLength(1);
+    expect(consumed.find(Boolean)).toEqual(transaction);
+  });
+});

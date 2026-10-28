@@ -270,6 +270,7 @@ model User {
   sessions               Session[]
   refreshTokens          RefreshToken[]
   emailTokens            EmailToken[]
+  providerAccounts       ProviderAccount[]
   apiKeys                ApiKey[]
   ownedWorkspaces        Workspace[]             @relation("WorkspaceOwner")
   workspaceMemberships   WorkspaceMember[]
@@ -1335,6 +1336,33 @@ model EmailToken {
   @@index([userId, purpose])
   @@index([expiresAt])
   @@map("email_tokens")
+}
+
+model OidcLogin {
+  state        String   @id
+  provider     String
+  nonce        String?
+  codeVerifier String
+  redirectTo   String?
+  userId       String?
+  sessionId    String?
+  createdAt    DateTime
+  expiresAt    DateTime
+
+  @@index([expiresAt])
+  @@map("oidc_logins")
+}
+
+model ProviderAccount {
+  provider  String
+  subject   String
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, subject])
+  @@index([userId])
+  @@map("provider_accounts")
 }
 
 model ApiKey {
