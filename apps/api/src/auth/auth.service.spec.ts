@@ -12,6 +12,7 @@ describe('AuthService', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
     );
 
     await expect(
@@ -23,6 +24,7 @@ describe('AuthService', () => {
     const credentials = { verify: vi.fn().mockResolvedValue(null) };
     const service = new AuthService(
       credentials as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,

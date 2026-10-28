@@ -74,7 +74,13 @@ const operationIds = Object.values(document.paths)
 assert.equal(new Set(operationIds).size, operationIds.length);
 assert.deepEqual(Object.keys(document.paths).sort(), [
   '/api/v1',
+  '/api/v1/auth/email/verification',
+  '/api/v1/auth/email/verify',
   '/api/v1/auth/me',
+  '/api/v1/auth/oidc/{provider}/callback',
+  '/api/v1/auth/oidc/{provider}/login',
+  '/api/v1/auth/password/forgot',
+  '/api/v1/auth/password/reset',
   '/api/v1/auth/register',
   '/api/v1/auth/sessions',
   '/api/v1/auth/sessions/{id}',
@@ -84,12 +90,18 @@ assert.deepEqual(Object.keys(document.paths).sort(), [
 ]);
 assert.deepEqual(operationIds.sort(), [
   'application_getHello',
+  'auth_finishOidc',
   'auth_getMe',
   'auth_listSessions',
   'auth_register',
+  'auth_requestPasswordReset',
+  'auth_resendVerification',
+  'auth_resetPassword',
   'auth_revokeSession',
   'auth_signIn',
   'auth_signOut',
+  'auth_startOidc',
+  'auth_verifyEmail',
   'health_check',
 ]);
 assert.deepEqual(document.paths['/api/v1/auth/me'].get.security, [

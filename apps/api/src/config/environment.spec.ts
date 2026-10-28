@@ -17,6 +17,23 @@ describe('validateEnvironment', () => {
     expect(validateEnvironment(validEnvironment)).toEqual(validEnvironment);
   });
 
+  it('requires complete optional mail and Google provider credentials', () => {
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        RESEND_API_KEY: 'private-key',
+      }),
+    ).toThrow(/RESEND_API_KEY and MAIL_FROM must be configured together/);
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        GOOGLE_CLIENT_ID: 'private-client-id',
+      }),
+    ).toThrow(
+      /GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured together/,
+    );
+  });
+
   it('reports missing or malformed values without echoing their contents', () => {
     expect(() =>
       validateEnvironment({

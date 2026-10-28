@@ -1,4 +1,8 @@
-import { SessionService, SignInService } from '@nestjs/authentication';
+import {
+  EmailVerificationService,
+  SessionService,
+  SignInService,
+} from '@nestjs/authentication';
 import { ConflictException, Injectable } from '@nestjs/common';
 
 import { AuthRateLimitService } from './auth-rate-limit.service.js';
@@ -11,6 +15,7 @@ export class AuthService {
     private readonly signIn: SignInService,
     private readonly sessions: SessionService,
     private readonly rateLimit: AuthRateLimitService,
+    private readonly emailVerification: EmailVerificationService,
   ) {}
 
   assertRegistrationAllowed(ipAddress: string) {
@@ -22,12 +27,17 @@ export class AuthService {
   }
 
   async register(email: string, password: string, displayName?: string) {
+    let user: Awaited<ReturnType<CredentialsService['register']>> | undefined;
     try {
-      await this.credentials.register(email, password, displayName);
+      user = await this.credentials.register(email, password, displayName);
     } catch (error) {
       if (!(error instanceof ConflictException)) {
         throw error;
       }
+    }
+
+    if (user) {
+      void this.emailVerification.send(user).catch(() => undefined);
     }
 
     return { accepted: true };
