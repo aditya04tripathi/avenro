@@ -8,9 +8,13 @@ The API now uses a shared `src/bootstrap.ts` for the production entry point and 
 
 E2E tests use the NodeAdapter and shared transport configuration without opening a database connection. The built AppModule smoke uses a test-only Prisma provider override; it verifies the emitted module graph, runtime path aliases, HTTP request and shutdown without claiming database connectivity. See task 01.1 in `IMPLEMENTATION_PLAN.md` for command evidence and remaining verification boundaries.
 
+## Task 01.2 implementation update — 29 October 2026
+
+The shared bootstrap now installs strict DTO validation, a stable error response filter, bounded request IDs, JSON logging and safe unexpected-error metadata. Shared HTTP primitives cover bounded cursor pagination, UTC ISO date strings, UUIDv7 identifiers and explicit enums. The E2E harness uses the NodeAdapter and production bootstrap configuration; a typed controller verifies decorator metadata, nested validation, dependency injection, request IDs and safe errors. Disposable PostgreSQL clients can only be constructed from a distinct local `TEST_DATABASE_URL` whose database name begins `avenro_test`; cleanup disconnects without dropping schema or resetting data. No database connection was exercised. Exact evidence and boundaries are in task 01.2 in `IMPLEMENTATION_PLAN.md`.
+
 ## Preservation requirements
 
-The checkout is on `master` with no commits. The root files, `apps/`, `packages/`, lockfile, and `.agents/` were already untracked when inspected. A normal `git diff` cannot recover them. This document is not a source backup.
+At the 00.1 baseline inspection, the checkout was on `master` with no commits, and the root files, `apps/`, `packages/`, lockfile, and `.agents/` were untracked. A normal `git diff` could not recover them. This document is not a source backup.
 
 Before replacement, create a private filesystem snapshot of the checkout, including untracked files and required local configuration; keep secrets outside shared documentation. Verify that the snapshot can be opened. Record the current dependency lockfile and database migration history. If data matters, take and restore-test a database backup before schema migration. Do not run `git clean`, delete migrations, reset the database, remove Docker volumes, or overwrite environment files. Source rewrite authorization does not authorize data destruction or production deployment.
 

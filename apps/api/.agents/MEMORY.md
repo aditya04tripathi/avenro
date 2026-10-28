@@ -18,11 +18,11 @@ Plan phase 19 adds Avenro MCP after core staging gates: protocol/OAuth transport
 
 ## Verified baseline
 
-The package is `@avenro/api`. Nest core/common installed 12.3.1; NodeAdapter 12.3.2; authentication library 0.1.2; Prisma 7.10.1. ESM/NodeNext and `.js` import suffixes. Current main serves `/api` on PORT or 3001 using NodeAdapter, not the default Express adapter.
+The package is `@avenro/api`. Nest core/common installed 12.3.1; NodeAdapter 12.3.2; authentication library 0.1.2; Prisma 7.10.1. ESM/NodeNext and `.js` import suffixes. Since task 01.1, main serves `/api/v1` on PORT or 3001 using NodeAdapter, not the default Express adapter; health is served at `/health`.
 
-AppModule imports global config, Prisma, health and skeletal auth. Only GET `/api` (Hello World) and GET `/api/health` have handlers. Health pings BASE_URL/api and Prisma. AuthController has no endpoints; AuthService is empty. UsersService/CredentialsService contain real helper code but are not registered in AuthModule. No Swagger dependency/DTO/plugin/bootstrap exists. Schema and one large migration are persistence assets, not implemented feature endpoints.
+AppModule imports global config, Prisma, health and skeletal auth. Only GET `/api` (Hello World) and GET `/api/health` have product handlers. Health pings BASE_URL/api and Prisma. AuthController has no endpoints; AuthService is empty. UsersService/CredentialsService contain real helper code but are not registered in AuthModule. Task 01.2 added shared HTTP DTO primitives, validation, safe error mapping, request IDs and structured redacted logging; there are still no product DTO routes, Swagger dependency or OpenAPI pipeline. Schema and one large migration are persistence assets, not implemented feature endpoints.
 
-Unit suite (one Hello World test), build, TypeScript check and lint passed during baseline inspection. E2E/DB/provider/runtime startup were not verified. Source E2E uses default adapter and `/`, unlike main. Build success does not prove runtime alias resolution, DB availability or contract generation.
+Baseline unit/build/type/lint checks passed before task 01.1. Task 01.1 and task 01.2 add NodeAdapter E2E and built-runtime checks; the task 01.2 disposable database guard is unit-tested, but no PostgreSQL connection or provider/runtime deployment was verified. Build success does not prove production database availability or contract generation.
 
 ## Task 01.1 current implementation
 
@@ -30,6 +30,13 @@ Unit suite (one Hello World test), build, TypeScript check and lint passed durin
 - Product routes use `/api/v1`; health is at `/health`; `/api` has no compatibility alias. Environment validation requires a PostgreSQL URL, port, app origin and trusted origins, and requires secure cookie settings in production.
 - The adapter enforces a 1 MiB JSON/urlencoded body limit, security headers, an explicit request-origin allowlist and CORS. Proxy trust is disabled by default and can be scoped through `TRUSTED_PROXIES`. `SHUTDOWN_GRACE_MS` defaults to 10 seconds and bounds active-request drain before forced connection closure.
 - E2E behavior and the built AppModule/alias smoke are recorded under task 01.1 in `docs/backend/IMPLEMENTATION_PLAN.md`. The built smoke overrides Prisma and does not verify database connectivity or the configured API database target.
+
+## Task 01.2 current implementation
+
+- `src/bootstrap.ts` installs strict DTO validation, safe exception mapping, request correlation and structured JSON logging. Shared HTTP primitives are under `src/common/http/`.
+- `test/app.e2e-spec.ts` uses the NodeAdapter and shared bootstrap configuration. DTO validation and constructor injection prove decorator metadata in the test compilation path.
+- `test/support/test-database.ts` requires `NODE_ENV=test`, a distinct local `TEST_DATABASE_URL`, and a database named `avenro_test` or `avenro_test_*`. It binds Prisma to that URL and cleanup only disconnects; it does not drop schemas or reset data.
+- Task 01.2 verification evidence and the fact that no PostgreSQL connection was made are recorded in `docs/backend/IMPLEMENTATION_PLAN.md`.
 
 ## Constraints and unresolved decisions
 
@@ -46,7 +53,7 @@ Unit suite (one Hello World test), build, TypeScript check and lint passed durin
 
 ## Useful commands
 
-From repository root: `pnpm --filter @avenro/api test`, `pnpm --filter @avenro/api build`, `pnpm --filter @avenro/api lint`, `pnpm --filter @avenro/api exec tsc --noEmit -p tsconfig.build.json`. E2E requires a guarded disposable database and matching bootstrap. New contract/integration scripts are planned, not currently available.
+From repository root: `pnpm --filter @avenro/api test`, `pnpm --filter @avenro/api test:e2e`, `pnpm --filter @avenro/api build`, `pnpm --filter @avenro/api lint`, and `pnpm --filter @avenro/api exec tsc --noEmit -p tsconfig.build.json`. E2E uses the shared NodeAdapter/bootstrap and does not connect to PostgreSQL. Any test database client must be created through `test/support/test-database.ts` with a local, distinct `TEST_DATABASE_URL` named `avenro_test` or `avenro_test_*`.
 
 ## Update policy
 

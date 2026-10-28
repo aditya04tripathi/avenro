@@ -564,6 +564,33 @@ A task is VERIFIED only when its acceptance gate passes and results are recorded
 
 **Remaining:** The health endpoint's APP_ORIGIN and database probes were not invoked. Proxy trust parsing/defaults were tested, but forwarded IP/protocol behavior through a real trusted proxy was not. Real database, production cookie settings, external origins, and production startup were not exercised. No .env file was read or changed; no database reset, deployment, or commit occurred.
 
+### 01.2 Shared HTTP contract and test harness — 29 October 2026
+
+**Task:** 01.2 Shared HTTP contract and test harness.
+
+**State:** VERIFIED. The shared contract and acceptance scenarios passed unit, NodeAdapter E2E, type, lint, build, and built-runtime checks. No database connection was made.
+
+**Source:** `src/bootstrap.ts`, `src/common/http/*`, `test/app.e2e-spec.ts`, `test/support/test-database.ts`, and `test/test-database.spec.ts`. Commits: `68849f9` (HTTP contract/bootstrap and E2E) and `23c2678` (guarded disposable database client).
+
+**Decisions:** Global validation transforms only explicitly decorated query inputs, forbids extra properties, rejects nulls and unknown nested values, and maps validation errors to bounded path/code/message items. Error responses use `statusCode`, stable `code`, safe `message`, and `requestId`; unexpected errors never return exception details and are logged with only request ID and method using JSON logger configuration. Request IDs accept only 1–64 ASCII letters, digits, underscores, or hyphens; invalid or absent values receive a generated UUID. Shared primitives provide limit 1–100 (default 20), bounded cursor text, UTC ISO timestamps, UUIDv7 and explicit enum validation. Test PostgreSQL clients require `NODE_ENV=test`, a distinct URL on localhost/loopback, a database named `avenro_test` or `avenro_test_*`, and a target distinct from `DATABASE_URL`; cleanup disconnects without dropping schemas or resetting data.
+
+**Migration:** None. No database URL value was read or printed; no database connection, schema operation, reset, migration, or deployment ran.
+
+**Evidence:**
+
+- `pnpm --filter @avenro/api format` — exit 0. Package formatting touched four unrelated auth files; those formatter-only changes were restored before committing.
+- `pnpm --filter @avenro/api test` — exit 0; 11 tests passed across 4 files, including URL guard, target comparison, Prisma client disconnect, recursive log redaction, and environment behavior.
+- `pnpm --filter @avenro/api test:e2e` — exit 0; 7 tests passed using the shared NodeAdapter/bootstrap. Coverage includes 1 MiB body rejection (413), origin/security headers, drain behavior, decorator/DI metadata through constructor injection, nested/extra/null validation, UUIDv7, enum and UTC date handling, pagination default and 1/100 boundaries, request ID propagation/generation, and safe unexpected-error response/log payload.
+- `pnpm --filter @avenro/api exec tsc --noEmit -p tsconfig.build.json` — exit 0.
+- `pnpm --filter @avenro/api lint` — exit 0.
+- `pnpm --filter @avenro/api build` — exit 0.
+- `pnpm --filter @avenro/api test:built-smoke` — exit 0; emitted AppModule started and served a request through NodeAdapter, then shut down.
+- Scoped commit script `/tmp/avenro-01-2-source-commits.sh` — exit 0; created `68849f9` and `23c2678` with named paths only.
+
+**Contract:** Added `ErrorResponseDto`, `PaginationQueryDto`, and validators for explicit enums, UTC ISO dates, and UUIDv7. Validation and unexpected exceptions share the safe error envelope; oversized bodies retain the NodeAdapter's 413 response and include a correlated response header. No product endpoint DTOs or OpenAPI pipeline were added.
+
+**Remaining:** E2E contract controllers are test fixtures, not product routes. The disposable database helper's URL guard and disconnect cleanup were tested without opening a database connection; PostgreSQL connectivity and schema behavior remain unverified. Real production startup, DB target, provider integrations, and deployment were not exercised. No secrets were read, no data was reset, and no deployment occurred.
+
 ## 9. Reference index
 
 Use the `nestjs-docs` skill and its task-relevant chapters, discovered through the available skill catalog. The local corpus spans Nest 11–12 and may include features newer than an installed package. Installed declarations, package peers and runtime tests decide whether an example is usable. Read codebase-design for module/interface/seam discipline and antislop-code for comment hygiene.

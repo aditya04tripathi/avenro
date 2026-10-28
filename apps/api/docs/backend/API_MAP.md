@@ -7,7 +7,7 @@ As of 29 October 2026. Paths below are relative to `apps/api`. Current and targe
 ```mermaid
 flowchart TD
   Main[main.ts] --> Boot[bootstrap.ts: NodeAdapter, /api/v1]
-  Boot --> Transport[Origin allowlist, 1 MiB parsers, security headers, proxy trust, graceful shutdown]
+  Boot --> Transport[Origin allowlist, 1 MiB parsers, security headers, proxy trust, graceful shutdown, request IDs, validation, error mapping]
   Boot --> App[AppModule]
   App --> Config[ConfigModule: validated environment]
   App --> Root[AppController: GET /api/v1]
@@ -33,7 +33,7 @@ UsersService and CredentialsService exist outside this connected provider graph.
 | GET    | `/api/v1`                 | None  | Plain text `Hello World!`                 | Public; CORS/origin policy applies         |
 | GET    | `/health`                 | None  | Terminus aggregate health or health error | Public; depends on APP_ORIGIN and database |
 
-The shared bootstrap applies to the production entry point and E2E harness. `GET /api` has no compatibility alias. No other product route handlers were found in `src`. There are no DTO-backed contract definitions, permission policies, worker entry points, realtime handlers, or OpenAPI endpoints.
+The shared bootstrap applies to the production entry point and E2E harness. `GET /api` has no compatibility alias. Shared HTTP DTO primitives and validation/error handling exist, but no product route DTOs, permission policies, worker entry points, realtime handlers, or OpenAPI endpoints exist. Contract and dependency-metadata behavior is covered by E2E fixture controllers, not product routes.
 
 ## Proposed module design
 
