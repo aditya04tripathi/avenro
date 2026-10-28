@@ -2,6 +2,12 @@
 
 Inspected: 29 October 2026. Repository: Avenro. This is a source inventory, not a claim that the application is deployed or production ready. Read this before overwriting backend files.
 
+## Task 03.2 implementation update — 29 October 2026
+
+The local implementation now exposes email verification, verification resend, generic password-reset request, password reset, and Google OIDC login/callback routes. It uses the installed `@nestjs/authentication` 0.1.2 purpose-bound token services and persistent Prisma stores. OIDC transactions persist state, nonce, PKCE verifier, redirect and optional link session in `oidc_logins`; external accounts map by provider and stable subject in `provider_accounts`. Email delivery uses the Resend HTTPS API adapter. Google and Resend handlers are registered only when their configuration is present, so an unconfigured provider does not silently enable process-local auth state.
+
+Account lookup by email occurs only when the verified provider profile proves that address and the local account has already verified it. Otherwise linking requires the package's authenticated link flow. The additive migration was applied only to the validated `avenro_test_authdbea3798e7` fixture. PostgreSQL tests passed for purpose-isolated concurrent token consumption, single-use persisted OIDC state, and immediate password-reset session revocation. Resend delivery was stubbed in the HTTP integration test. No provider sandbox was configured or contacted, so the provider-backed portion of task 03.2 remains blocked at its acceptance gate. See its ledger entry in `IMPLEMENTATION_PLAN.md` for exact checks and required configuration.
+
 ## Task 01.1 implementation update — 29 October 2026
 
 The API now uses a shared `src/bootstrap.ts` for the production entry point and E2E transport configuration. Product routes use `/api/v1`; health is excluded from that prefix at `/health`, and `/api` has no compatibility alias. Startup validates PostgreSQL `DATABASE_URL`, `PORT`, `APP_ORIGIN`, `TRUSTED_ORIGINS`, and production cookie settings without including values in validation errors. The NodeAdapter applies JSON and urlencoded body limits, security headers, a strict request-origin allowlist, CORS, explicit proxy trust (disabled by default), and a configurable graceful shutdown period.

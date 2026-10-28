@@ -682,6 +682,34 @@ One additional local database, `avenro_test_022empty`, was created before the te
 
 **Remaining:** Before external release, configure one shared strong HMAC key across all API replicas and verify the production PostgreSQL connection and migration in the intended deployment environment. No production database access or deployment occurred. Workspace authorization and recovery/email-verification/OIDC flows remain separate tasks.
 
+### 03.2 Verification, recovery and Google identity — 29 October 2026
+
+**Task:** 03.2 Verification, recovery and Google identity.
+
+**State:** LOCAL IMPLEMENTATION AND DATABASE GATES VERIFIED; PROVIDER ACCEPTANCE BLOCKED. The configured API environment has no mail/OIDC sandbox configuration. Deterministic mail handling was exercised with a stubbed HTTPS response; no external mail or Google provider was contacted. The verified `avenro_test_authdbea3798e7` fixture was reused through the guarded `TEST_DATABASE_URL`; only the additive task migration was applied. The fixture was not reset or dropped.
+
+**Prerequisites and allowed scope:** Task 03.1 is verified locally above. Changes are limited to auth handlers, stores, DTOs and focused tests; the additive provider-account/OIDC-state Prisma schema and migration; API configuration example and route documentation; and this ledger. No generated Prisma output, production database, deployment or secret values were changed or accessed.
+
+**Behavior implemented:** The installed authentication package supplies purpose-bound, hashed, expiring email tokens and atomic consume semantics for verification and password reset. Verification is conditional on the account's current normalized email. Registration starts verification delivery without changing its generic acknowledgement; resend and reset requests use the existing distributed email/IP limiter. Reset invalidates sessions through the package's persistent session store. A Resend adapter sends only over HTTPS, returns sanitized delivery failures, and does not log tokens. Google OIDC uses the package's state/nonce/PKCE and ID-token validation. Exact callback URL is derived from validated `APP_ORIGIN`; pending state is stored in PostgreSQL, and provider identities use `(provider, subject)`. Email matching requires verified claims and an already verified local account; explicit linking is bound by the package to the authenticated session. Features are disabled until their corresponding provider settings are configured.
+
+**Evidence:**
+
+- Read `apps/api/AGENTS.md`, `apps/api/.agents/MEMORY.md`, the task plan/current map/API map, installed authentication declarations, and relevant NestJS authentication documentation.
+- `pnpm --filter @avenro/api exec prisma generate --config prisma7.config.ts` — exit 0; generated Prisma client successfully. The incidental generated ERD was restored to its prior tracked contents.
+- `pnpm --filter @avenro/api format` — exit 0.
+- `pnpm --filter @avenro/api test` — exit 0; 22 passed, 11 PostgreSQL-gated cases skipped with no test URL.
+- `pnpm --filter @avenro/api test:e2e` without a test URL — exit 0; 7 passed, 4 PostgreSQL-gated cases skipped.
+- `pnpm --filter @avenro/api exec prisma migrate deploy --config prisma7.config.ts` with the URL validated by `test/support/test-database.ts` — exit 0; applied `20261029170000_identity_auth` to `avenro_test_authdbea3798e7` only.
+- `test/integration/authentication-store.integration.spec.ts` with that guarded fixture — exit 0; 9 PostgreSQL cases passed, including wrong-purpose preservation and concurrent single-use consumption for email tokens and OIDC state, plus the existing concurrent session contract.
+- `pnpm --filter @avenro/api test:e2e` with that guarded fixture — exit 0; 8 passed, 4 skipped. The new recovery integration case verified the current email, rejected replay and a token for an address changed since issuance, confirmed a mail outage returns a sanitized 503, reset the password, confirmed immediate session revocation, rejected reset-token replay, and accepted the new password. Resend's HTTP response was stubbed; no real provider request occurred.
+- `pnpm --filter @avenro/api lint`, `pnpm --filter @avenro/api build`, and `pnpm --filter @avenro/api exec tsc --noEmit -p tsconfig.build.json` — exit 0.
+- `pnpm --filter @avenro/api test:contract` — exit 0 after adding the new route contracts; built OpenAPI route and DTO validation passed.
+- `pnpm --filter @avenro/api test:built-smoke` — exit 0; built AppModule startup, request and shutdown passed.
+- `git diff --check` — exit 0.
+- Configured `.env` variable names were inspected without reading or printing values. `RESEND_API_KEY`, `MAIL_FROM`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` are absent. The real provider sandbox gate remains untested.
+
+**Remaining acceptance work:** Configure sandbox Resend credentials and sender (`RESEND_API_KEY`, `MAIL_FROM`) plus Google Web OAuth client credentials (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) with the exact redirect URI `${APP_ORIGIN}/api/v1/auth/oidc/google/callback`. Then verify actual delivery and a full Google sandbox callback/sign-in. No provider credentials were configured, exposed, or used.
+
 ## 9. Reference index
 
 Use the `nestjs-docs` skill and its task-relevant chapters, discovered through the available skill catalog. The local corpus spans Nest 11–12 and may include features newer than an installed package. Installed declarations, package peers and runtime tests decide whether an example is usable. Read codebase-design for module/interface/seam discipline and antislop-code for comment hygiene.
