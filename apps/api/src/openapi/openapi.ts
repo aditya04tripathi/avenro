@@ -14,6 +14,11 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
     .setTitle('Avenro API')
     .setDescription('The Avenro HTTP API contract.')
     .setVersion('1.0.0')
+    .addCookieAuth(
+      '__Host-sid',
+      { type: 'apiKey', in: 'cookie' },
+      'sessionCookie',
+    )
     .build();
 
   return SwaggerModule.createDocument(app, configuration, {

@@ -32,6 +32,12 @@ export class UsersService {
         passwordHash: options.passwordHash ?? null,
         emailVerified: options.emailVerified ?? false,
       },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        emailVerified: true,
+      },
     });
 
     return {
@@ -45,6 +51,12 @@ export class UsersService {
   async findById(id: string): Promise<User | null> {
     const found = await this.prisma.user.findUnique({
       where: { id },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        emailVerified: true,
+      },
     });
 
     if (!found) {
@@ -62,6 +74,12 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | null> {
     const found = await this.prisma.user.findUnique({
       where: { email: normalizeEmail(email) },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        emailVerified: true,
+      },
     });
 
     if (!found) {
@@ -81,6 +99,13 @@ export class UsersService {
   ): Promise<{ user: User; passwordHash: string | null } | null> {
     const found = await this.prisma.user.findUnique({
       where: { email: normalizeEmail(email) },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        emailVerified: true,
+        passwordHash: true,
+      },
     });
 
     if (!found) {
@@ -112,6 +137,12 @@ export class UsersService {
       data: {
         email: normalized,
         emailVerified: false,
+      },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        emailVerified: true,
       },
     });
 

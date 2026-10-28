@@ -1,3 +1,4 @@
+import { Public } from '@nestjs/authentication';
 import { Controller, Get } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -26,6 +27,7 @@ import {
 } from './health-response.dto.js';
 
 @Controller('health')
+@Public()
 @ApiTags('health')
 @ApiExtraModels(HealthIndicatorDto, ErrorFieldDto, ErrorResponseDto)
 export class HealthController {

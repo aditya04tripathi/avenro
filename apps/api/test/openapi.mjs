@@ -72,8 +72,31 @@ const operationIds = Object.values(document.paths)
   .filter((operation) => typeof operation === 'object' && operation !== null)
   .map((operation) => operation.operationId);
 assert.equal(new Set(operationIds).size, operationIds.length);
-assert.deepEqual(Object.keys(document.paths).sort(), ['/api/v1', '/health']);
-assert.deepEqual(operationIds.sort(), ['application_getHello', 'health_check']);
+assert.deepEqual(Object.keys(document.paths).sort(), [
+  '/api/v1',
+  '/api/v1/auth/me',
+  '/api/v1/auth/register',
+  '/api/v1/auth/sessions',
+  '/api/v1/auth/sessions/{id}',
+  '/api/v1/auth/sign-in',
+  '/api/v1/auth/sign-out',
+  '/health',
+]);
+assert.deepEqual(operationIds.sort(), [
+  'application_getHello',
+  'auth_getMe',
+  'auth_listSessions',
+  'auth_register',
+  'auth_revokeSession',
+  'auth_signIn',
+  'auth_signOut',
+  'health_check',
+]);
+assert.deepEqual(document.paths['/api/v1/auth/me'].get.security, [
+  { sessionCookie: [] },
+]);
+assert.equal(document.paths['/api/v1/auth/register'].post.security, undefined);
+assert.equal(document.components.securitySchemes.sessionCookie.name, '__Host-sid');
 
 const errorFieldSchema = document.components?.schemas?.ErrorFieldDto;
 assert.deepEqual(Object.keys(errorFieldSchema.properties).sort(), [

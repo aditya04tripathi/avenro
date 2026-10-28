@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import {
   AuthenticationStorage,
   type EmailTokenPurpose,
@@ -11,6 +10,7 @@ import {
   type SessionRecord,
   type SessionStore,
 } from '@nestjs/authentication';
+import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '@/generated/prisma/client.js';
 import { PrismaService } from '@/prisma/prisma.service.js';
@@ -48,7 +48,23 @@ export class PrismaAuthenticationStore
   async getSession(id: string): Promise<SessionRecord | undefined> {
     const row = await this.prisma.session.findUnique({
       where: { id },
-      include: { user: true },
+      select: {
+        id: true,
+        userId: true,
+        createdAt: true,
+        expiresAt: true,
+        lastActiveAt: true,
+        mfa: true,
+        metadata: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            displayName: true,
+            emailVerified: true,
+          },
+        },
+      },
     });
 
     if (!row) {
@@ -112,6 +128,15 @@ export class PrismaAuthenticationStore
   async listUserSessions(userId: string): Promise<SessionRecord[]> {
     const rows = await this.prisma.session.findMany({
       where: { userId },
+      select: {
+        id: true,
+        userId: true,
+        createdAt: true,
+        expiresAt: true,
+        lastActiveAt: true,
+        mfa: true,
+        metadata: true,
+      },
     });
 
     return rows.map((row) => ({

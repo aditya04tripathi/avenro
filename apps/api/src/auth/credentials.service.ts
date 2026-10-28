@@ -1,5 +1,7 @@
-import { ConflictException, Injectable } from '@nestjs/common';
 import { PasswordHasher } from '@nestjs/authentication';
+import { ConflictException, Injectable } from '@nestjs/common';
+
+import { Prisma } from '@/generated/prisma/client.js';
 
 import type { User } from './users.service.js';
 import { UsersService } from './users.service.js';
@@ -16,17 +18,22 @@ export class CredentialsService {
     password: string,
     displayName?: string,
   ): Promise<User> {
-    const existing = await this.usersService.findByEmail(email);
-    if (existing) {
-      throw new ConflictException('Email already registered');
-    }
-
     const passwordHash = await this.passwordHasher.hash(password);
-    return this.usersService.create(email, {
-      passwordHash,
-      displayName,
-      emailVerified: false,
-    });
+    try {
+      return await this.usersService.create(email, {
+        passwordHash,
+        displayName,
+        emailVerified: false,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Email already registered');
+      }
+      throw error;
+    }
   }
 
   async verify(email: string, password: string): Promise<User | null> {
