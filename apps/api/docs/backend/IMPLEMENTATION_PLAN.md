@@ -622,6 +622,30 @@ A task is VERIFIED only when its acceptance gate passes and results are recorded
 
 **Remaining:** Documentation is opt-in only in development/test and intentionally has no authentication gate; production and staging-like environments cannot register it. No auth/session endpoint exists to document. Database health dependencies, production database connectivity, deployment and external provider behavior remain unverified and outside this task.
 
+### 02.2 Repair schema integrity and migration workflow — 29 October 2026
+
+**Task:** 02.2 Repair schema integrity and migration workflow.
+
+**State:** BLOCKED before implementation. The required database identity and project/membership conflict preflight could not be tied to the intended Avenro database safely.
+
+**Source:** Reinspected `prisma/schema.prisma`, the immutable existing migration `prisma/migrations/20261028144312_init_auth/migration.sql`, `prisma7.config.ts`, package scripts, test database guard, and the verified 00.1, 01.2 and 02.1 entries above. No application or migration files were changed.
+
+**Decisions:** The 00.1 compatibility choice remains one workspace to one internal project with active `WorkspaceMember` as the sole authorization source. No project or membership rows were inspected. The sanitized configured database identity is `localhost:51214/template1`; it is not an explicitly isolated `avenro_test*` database and does not match the previously inventoried local `avenro` database. Its credentials were not emitted. Do not run migrations or data-changing preflight against this target. `ProjectMembership` role/status mapping and any multi-project workspace conflicts remain unknown; do not infer mappings or remove legacy columns.
+
+**Migration:** None. The existing `init_auth` migration was left immutable. No application-database connection, catalog inventory, schema/data query, reset, or deployment ran during 02.2 preflight. A local Compose PostgreSQL server identity query was used only to confirm the server process responds.
+
+**Evidence:**
+
+- Re-read the verified 00.1 record: local Compose database `avenro` had zero user tables and no `_prisma_migrations`; the configured API target and any external/production Avenro database were explicitly unresolved.
+- `node --input-type=module -e "import 'dotenv/config'; ..."` from `apps/api` — exit 0; emitted only sanitized URL identity fields (`postgres:`, `localhost`, port `51214`, database `template1`, and a boolean indicating credentials are configured). No credential value was printed.
+- `docker exec avenro-postgres psql -U postgres -d postgres -Atc 'SELECT current_database()'` — exit 0 and returned `postgres`; this confirmed access to the local Compose server only, not the configured `template1` target's application identity or data mapping.
+- `docker compose ps --services --status running` — Avenro local PostgreSQL, Redis and SeaweedFS were running. No test database was created or used.
+- Inspected `test/support/test-database.ts`: it requires `NODE_ENV=test`, a distinct local `TEST_DATABASE_URL`, and database name `avenro_test` or `avenro_test_*`. No such target was established for this preflight.
+
+**Contract:** No schema, generated-client, package-script, migration, or integration-test contract changed.
+
+**Remaining:** Before implementation, identify the intended Avenro database through a safe sanitized path and establish a validated isolated `avenro_test*` URL for migration acceptance tests. For any existing Avenro data, collect only aggregate project-count, membership/status/role disagreement, workspace/project id, owner/lead, attribution, and tenant-link conflict counts without row contents; obtain product decisions for ambiguous mappings. Then implement and test the additive migration, empty-database and previous-schema fixture paths, DB-level tenant rejection, and generated-client compilation. Do not apply a migration to `template1` or any unidentified external/production target.
+
 ## 9. Reference index
 
 Use the `nestjs-docs` skill and its task-relevant chapters, discovered through the available skill catalog. The local corpus spans Nest 11–12 and may include features newer than an installed package. Installed declarations, package peers and runtime tests decide whether an example is usable. Read codebase-design for module/interface/seam discipline and antislop-code for comment hygiene.
