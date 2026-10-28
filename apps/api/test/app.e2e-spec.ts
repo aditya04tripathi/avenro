@@ -1,12 +1,21 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
 import { type NestNodeApplication } from '@nestjs/platform-node';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { Type } from 'class-transformer';
+import { IsString, Matches, ValidateNested } from 'class-validator';
 import request from 'supertest';
+import { vi } from 'vitest';
 
 import { AppController } from '../src/app.controller.js';
 import { AppService } from '../src/app.service.js';
 import { configureApplication, createNodeAdapter } from '../src/bootstrap.js';
+import { PaginationQueryDto } from '../src/common/http/pagination-query.dto.js';
+import {
+  IsExplicitEnum,
+  IsUtcDateString,
+  IsUuid7,
+} from '../src/common/http/query-primitives.js';
 
 @Controller('shutdown')
 class ShutdownController {
@@ -25,6 +34,61 @@ class HealthRouteController {
   }
 }
 
+enum ProbeKind {
+  SAMPLE = 'sample',
+}
+
+class ProbeNestedDto {
+  @IsString()
+  @Matches(/^ok$/)
+  value!: string;
+}
+
+class ProbeBodyDto {
+  @IsUuid7()
+  id!: string;
+
+  @IsExplicitEnum(ProbeKind)
+  kind!: ProbeKind;
+
+  @IsUtcDateString()
+  occurredAt!: string;
+
+  @ValidateNested()
+  @Type(() => ProbeNestedDto)
+  nested!: ProbeNestedDto;
+}
+
+class ProbeDependency {
+  value() {
+    return 'injected';
+  }
+}
+
+@Controller('contract')
+class ContractController {
+  constructor(private readonly dependency: ProbeDependency) {}
+
+  @Get()
+  read(@Query() query: PaginationQueryDto) {
+    return {
+      limit: query.limit,
+      cursor: query.cursor ?? null,
+      dependency: this.dependency.value(),
+    };
+  }
+
+  @Post()
+  write(@Body() body: ProbeBodyDto) {
+    return body;
+  }
+
+  @Get('error')
+  fail() {
+    throw new Error('password=secret resetToken=do-not-expose');
+  }
+}
+
 describe('HTTP bootstrap (e2e)', () => {
   let app: NestNodeApplication;
 
@@ -37,8 +101,13 @@ describe('HTTP bootstrap (e2e)', () => {
       SHUTDOWN_GRACE_MS: '1000',
     };
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      controllers: [AppController, HealthRouteController, ShutdownController],
-      providers: [AppService],
+      controllers: [
+        AppController,
+        HealthRouteController,
+        ShutdownController,
+        ContractController,
+      ],
+      providers: [AppService, ProbeDependency],
     }).compile();
 
     app = moduleFixture.createNestApplication<NestNodeApplication>(
@@ -84,8 +153,10 @@ describe('HTTP bootstrap (e2e)', () => {
   it('rejects JSON bodies above the configured limit', async () => {
     await request(app.getHttpServer())
       .post('/api/v1')
+      .set('X-Request-Id', 'oversized_body')
       .send({ value: 'x'.repeat(1024 * 1024) })
-      .expect(413);
+      .expect(413)
+      .expect('x-request-id', 'oversized_body');
   });
 
   it('drains active requests before closing the application', async () => {
@@ -100,5 +171,112 @@ describe('HTTP bootstrap (e2e)', () => {
 
     expect(result.status).toBe(200);
     expect(result.body).toEqual({ ok: true });
+  });
+
+  it('validates nested DTOs and proves dependency metadata in the HTTP compilation path', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/contract?limit=100')
+      .expect(200, { limit: 100, cursor: null, dependency: 'injected' });
+
+    const valid = {
+      id: '018f47a2-6f7b-7cc1-98b5-9f6c312f7ad4',
+      kind: ProbeKind.SAMPLE,
+      occurredAt: '2026-10-29T12:00:00Z',
+      nested: { value: 'ok' },
+    };
+    await request(app.getHttpServer())
+      .post('/api/v1/contract')
+      .send(valid)
+      .expect(201, valid);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/contract')
+      .send({ ...valid, nested: { value: 'bad', extra: true } })
+      .expect(400)
+      .expect(({ body }) => {
+        expect(body.code).toBe('VALIDATION_FAILED');
+        expect(
+          body.fieldErrors.map((error: { path: string }) => error.path),
+        ).toContain('nested.value');
+      });
+    await request(app.getHttpServer())
+      .post('/api/v1/contract')
+      .send({ ...valid, extra: true })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/api/v1/contract')
+      .send({ ...valid, nested: null })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/api/v1/contract')
+      .send({ ...valid, occurredAt: '2026-10-29T12:00:00+11:00' })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/api/v1/contract')
+      .send({ ...valid, id: 'not-a-uuid', kind: 'unknown' })
+      .expect(400)
+      .expect(({ body }) => {
+        expect(
+          body.fieldErrors.map((error: { path: string }) => error.path),
+        ).toEqual(expect.arrayContaining(['id', 'kind']));
+      });
+  });
+
+  it('enforces pagination bounds and correlates valid or generated request ids', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/contract')
+      .expect(200, { limit: 20, cursor: null, dependency: 'injected' });
+
+    const accepted = await request(app.getHttpServer())
+      .get('/api/v1/contract?limit=1')
+      .set('X-Request-Id', 'client_request-1')
+      .expect(200);
+    expect(accepted.headers['x-request-id']).toBe('client_request-1');
+
+    await request(app.getHttpServer())
+      .get('/api/v1/contract?limit=0')
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/api/v1/contract?limit=101')
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/api/v1/contract?limit=')
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/api/v1/contract')
+      .set('X-Request-Id', 'invalid id')
+      .expect(({ headers }) => {
+        expect(headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/);
+      });
+  });
+
+  it('returns and logs no unexpected exception details', async () => {
+    const errorLog = vi
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => undefined);
+    try {
+      await request(app.getHttpServer())
+        .get('/api/v1/contract/error')
+        .set('X-Request-Id', 'error_case_1')
+        .expect(500)
+        .expect(({ body }) => {
+          expect(body).toEqual({
+            statusCode: 500,
+            code: 'INTERNAL_ERROR',
+            message: 'An unexpected error occurred',
+            requestId: 'error_case_1',
+          });
+          expect(JSON.stringify(body)).not.toContain('do-not-expose');
+        });
+      expect(errorLog).toHaveBeenCalledOnce();
+      expect(JSON.stringify(errorLog.mock.calls)).not.toContain(
+        'do-not-expose',
+      );
+      expect(JSON.stringify(errorLog.mock.calls)).not.toContain(
+        'password=secret',
+      );
+    } finally {
+      errorLog.mockRestore();
+    }
   });
 });

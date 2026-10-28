@@ -1,4 +1,11 @@
-import { RequestMethod, type Type } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConsoleLogger,
+  RequestMethod,
+  type Type,
+  type ValidationError,
+  ValidationPipe,
+} from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
   type NestNodeApplication,
@@ -8,6 +15,8 @@ import {
   type NodeResponse,
 } from '@nestjs/platform-node';
 
+import { HttpExceptionFilter } from './common/http/http-exception.filter.js';
+import { requestIdMiddleware } from './common/http/request-id.middleware.js';
 import {
   parseShutdownGraceMs,
   parseTrustedOrigins,
@@ -21,6 +30,7 @@ export async function createApplication<T>(
   const adapter = createNodeAdapter(environment);
   const app = await NestFactory.create<NestNodeApplication>(module, adapter, {
     bodyParser: false,
+    logger: new ConsoleLogger({ json: true }),
   });
 
   configureApplication(app, environment);
@@ -78,6 +88,7 @@ export function configureApplication(
   app.setGlobalPrefix('api/v1', {
     exclude: [{ path: 'health', method: RequestMethod.ALL }],
   });
+  app.use(requestIdMiddleware);
   app.useBodyParser('json', { limit: '1mb' });
   app.useBodyParser('urlencoded', {
     extended: true,
@@ -104,6 +115,24 @@ export function configureApplication(
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
   });
   app.enableShutdownHooks();
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      forbidUnknownValues: true,
+      transformOptions: { enableImplicitConversion: false },
+      validationError: { target: false, value: false },
+      exceptionFactory: (errors) =>
+        new BadRequestException({
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          message: 'Request validation failed',
+          fieldErrors: flattenValidationErrors(errors),
+        }),
+    }),
+  );
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const server = app.getHttpServer();
   server.requestTimeout = 30_000;
@@ -112,4 +141,22 @@ export function configureApplication(
   server.maxRequestsPerSocket = 100;
 
   return { port, trustedOrigins };
+}
+
+function flattenValidationErrors(
+  errors: ValidationError[],
+  parentPath = '',
+): Array<{ path: string; code: string; message: string }> {
+  return errors.flatMap((error) => {
+    const path = parentPath
+      ? `${parentPath}.${error.property}`
+      : error.property;
+    const ownErrors = Object.entries(error.constraints ?? {}).map(
+      ([code, message]) => ({ path, code, message }),
+    );
+    return [
+      ...ownErrors,
+      ...flattenValidationErrors(error.children ?? [], path),
+    ];
+  });
 }
