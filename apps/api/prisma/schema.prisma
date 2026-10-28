@@ -1,0 +1,1246 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./erd.svg"
+  theme    = "default"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum ProjectRole {
+  SCRUM_MASTER
+  PRODUCT_OWNER
+  DEVELOPER
+  VIEWER
+  CLIENT
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum WorkspaceStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+enum ProjectTemplate {
+  SCRUM
+  KANBAN
+  CUSTOM
+}
+
+enum ProjectStatus {
+  PLANNED
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum IssueType {
+  EPIC
+  STORY
+  TASK
+  BUG
+  SUBTASK
+}
+
+enum IssueStatus {
+  BACKLOG
+  SELECTED
+  IN_PROGRESS
+  REVIEW
+  DONE
+  CANCELLED
+}
+
+enum Priority {
+  LOWEST
+  LOW
+  MEDIUM
+  HIGH
+  HIGHEST
+}
+
+enum IssueDependencyType {
+  BLOCKS
+  RELATES_TO
+  DUPLICATES
+}
+
+enum BoardKind {
+  SCRUM
+  KANBAN
+}
+
+enum StatusCategory {
+  BACKLOG
+  ACTIVE
+  DONE
+}
+
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum ScopeChangeType {
+  ADDED
+  REMOVED
+  COMPLETED
+  REOPENED
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  AT_RISK
+  ON_TRACK
+  ACHIEVED
+  CANCELLED
+}
+
+enum HealthStatus {
+  ON_TRACK
+  AT_RISK
+  BLOCKED
+}
+
+enum MilestoneStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  MISSED
+}
+
+enum MeetingType {
+  PLANNING
+  DAILY_STANDUP
+  REVIEW
+  RETROSPECTIVE
+  REFINEMENT
+  GENERAL
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MinutesStatus {
+  DRAFT
+  FINALIZED
+  AMENDED
+}
+
+enum DecisionStatus {
+  PROPOSED
+  ACCEPTED
+  SUPERSEDED
+  REJECTED
+}
+
+enum ActionItemStatus {
+  OPEN
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  CANCELLED
+}
+
+enum DocumentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum RequirementKind {
+  FUNCTIONAL
+  NON_FUNCTIONAL
+}
+
+enum RequirementStatus {
+  PROPOSED
+  APPROVED
+  IMPLEMENTED
+  VERIFIED
+  REJECTED
+}
+
+enum RetrospectiveTemplate {
+  WENT_WELL_IMPROVE_ACTIONS
+  START_STOP_CONTINUE
+  CUSTOM
+}
+
+enum RetrospectiveStatus {
+  OPEN
+  CLOSED
+}
+
+enum FeedbackCategory {
+  WENT_WELL
+  IMPROVE
+  START
+  STOP
+  CONTINUE
+  CUSTOM
+}
+
+enum InfluenceLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum InterestLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ChangeRequestStatus {
+  PROPOSED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  IMPLEMENTED
+}
+
+enum IntegrationProvider {
+  GITHUB
+  GITLAB
+  CALENDAR
+  SLACK
+  TEAMS
+  CUSTOM
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  PAUSED
+  REVOKED
+}
+
+enum WebhookStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+enum PortalStatus {
+  PUBLISHED
+  WITHDRAWN
+}
+
+enum RiskStatus {
+  IDENTIFIED
+  MITIGATING
+  ACCEPTED
+  CLOSED
+}
+
+model User {
+  id                     String                  @id @default(uuid(7))
+  email                  String                  @unique
+  displayName            String                  @default("")
+  photoUrl               String?
+  passwordHash           String?
+  emailVerified          Boolean                 @default(false)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  sessions               Session[]
+  refreshTokens          RefreshToken[]
+  emailTokens            EmailToken[]
+  apiKeys                ApiKey[]
+  ownedWorkspaces        Workspace[]             @relation("WorkspaceOwner")
+  workspaceMemberships   WorkspaceMember[]
+  projectMemberships     ProjectMembership[]
+  ledProjects            Project[]               @relation("ProjectLead")
+  createdProjects        Project[]               @relation("ProjectCreator")
+  assignedIssues         Issue[]                 @relation("IssueAssignee")
+  reportedIssues         Issue[]                 @relation("IssueReporter")
+  issueComments          IssueComment[]
+  activityEvents         ActivityEvent[]
+  auditEvents            AuditEvent[]
+  notifications          Notification[]
+  savedFilters           SavedFilter[]
+  goals                  ProjectGoal[]
+  statusUpdates          ProjectStatusUpdate[]
+  organizedMeetings      Meeting[]               @relation("MeetingOrganizer")
+  facilitatedMeetings    Meeting[]               @relation("MeetingFacilitator")
+  minuteTakerMeetings    Meeting[]               @relation("MeetingMinuteTaker")
+  retrospectives         Retrospective[]         @relation("RetrospectiveFacilitator")
+  retrospectiveFeedback  RetrospectiveFeedback[]
+  risks                  Risk[]
+  changeRequests         ChangeRequest[]         @relation("ChangeRequester")
+  approvedChangeRequests ChangeRequest[]         @relation("ChangeApprover")
+  integrations           Integration[]           @relation("IntegrationConnector")
+  portalItems            ClientPortalItem[]      @relation("PortalPublisher")
+  uploadedFiles          StorageObject[]         @relation("FileUploader")
+  actionItems            ActionItem[]            @relation("ActionItemAssignee")
+}
+
+model Workspace {
+  id             String                  @id @default(uuid(7))
+  name           String
+  slug           String                  @unique
+  description    String                  @default("")
+  ownerId        String
+  status         WorkspaceStatus         @default(ACTIVE)
+  archivedAt     DateTime?
+  archivedBy     String?
+  createdAt      DateTime                @default(now())
+  createdBy      String
+  updatedAt      DateTime                @updatedAt
+  updatedBy      String
+  owner          User                    @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members        WorkspaceMember[]
+  invitations    WorkspaceInvitation[]
+  projectKeys    ProjectKeyReservation[]
+  projects       Project[]
+  notifications  Notification[]
+  savedFilters   SavedFilter[]
+  activities     ActivityEvent[]
+  auditEvents    AuditEvent[]
+  storageObjects StorageObject[]
+}
+
+model WorkspaceMember {
+  id          String           @id @default(uuid(7))
+  workspaceId String
+  userId      String
+  email       String
+  displayName String
+  role        WorkspaceRole    @default(MEMBER)
+  status      MembershipStatus @default(ACTIVE)
+  joinedAt    DateTime?
+  invitedBy   String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+}
+
+model WorkspaceInvitation {
+  id          String           @id @default(uuid(7))
+  workspaceId String
+  email       String
+  role        WorkspaceRole
+  status      InvitationStatus @default(PENDING)
+  tokenHash   String           @unique
+  expiresAt   DateTime
+  acceptedBy  String?
+  createdAt   DateTime         @default(now())
+  createdBy   String
+  updatedAt   DateTime         @updatedAt
+  updatedBy   String
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, email])
+}
+
+model ProjectKeyReservation {
+  id          String    @id @default(uuid(7))
+  workspaceId String
+  projectId   String
+  key         String
+  createdAt   DateTime  @default(now())
+  createdBy   String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, key])
+}
+
+model Project {
+  id                    String                  @id @default(uuid(7))
+  workspaceId           String
+  name                  String
+  key                   String
+  description           String                  @default("")
+  objective             String                  @default("")
+  template              ProjectTemplate         @default(SCRUM)
+  status                ProjectStatus           @default(ACTIVE)
+  leadId                String
+  nextIssueNumber       Int                     @default(1)
+  timezone              String                  @default("UTC")
+  archivedAt            DateTime?
+  archivedBy            String?
+  createdAt             DateTime                @default(now())
+  createdBy             String
+  updatedAt             DateTime                @updatedAt
+  updatedBy             String
+  workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lead                  User                    @relation("ProjectLead", fields: [leadId], references: [id], onDelete: Restrict)
+  creator               User                    @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  memberships           ProjectMembership[]
+  keyReservations       ProjectKeyReservation[]
+  issues                Issue[]
+  issueDependencies     IssueDependency[]
+  issueComments         IssueComment[]
+  boardConfigs          BoardConfig[]
+  workflowStatuses      WorkflowStatus[]
+  sprints               Sprint[]
+  sprintScopeChanges    SprintScopeChange[]
+  sprintSnapshots       SprintSnapshot[]
+  goals                 ProjectGoal[]
+  statusUpdates         ProjectStatusUpdate[]
+  milestones            Milestone[]
+  meetings              Meeting[]
+  agendaItems           MeetingAgendaItem[]
+  meetingMinutes        MeetingMinutes[]
+  minutesVersions       MeetingMinutesVersion[]
+  decisions             Decision[]
+  actionItems           ActionItem[]
+  documentFolders       DocumentFolder[]
+  documents             ProjectDocument[]
+  documentVersions      DocumentVersion[]
+  requirements          Requirement[]
+  retrospectives        Retrospective[]
+  retrospectiveFeedback RetrospectiveFeedback[]
+  risks                 Risk[]
+  stakeholders          Stakeholder[]
+  changeRequests        ChangeRequest[]
+  integrations          Integration[]
+  webhookDeliveries     WebhookDelivery[]
+  clientPortalItems     ClientPortalItem[]
+  storageObjects        StorageObject[]
+
+  @@unique([workspaceId, key])
+  @@index([workspaceId, status])
+}
+
+model ProjectMembership {
+  id          String           @id @default(uuid(7))
+  workspaceId String
+  projectId   String
+  userId      String
+  roles       ProjectRole[]
+  status      MembershipStatus @default(ACTIVE)
+  createdAt   DateTime         @default(now())
+  createdBy   String
+  updatedAt   DateTime         @updatedAt
+  updatedBy   String
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([workspaceId, userId])
+}
+
+model Issue {
+  id                 String              @id @default(uuid(7))
+  workspaceId        String
+  projectId          String
+  key                String
+  number             Int
+  type               IssueType
+  title              String
+  description        String              @default("")
+  acceptanceCriteria String[]
+  status             IssueStatus         @default(BACKLOG)
+  priority           Priority            @default(MEDIUM)
+  rank               String
+  assigneeId         String?
+  reporterId         String
+  parentId           String?
+  epicId             String?
+  sprintId           String?
+  estimate           Float?
+  labels             String[]
+  dueAt              DateTime?
+  archivedAt         DateTime?
+  archivedBy         String?
+  createdAt          DateTime            @default(now())
+  createdBy          String
+  updatedAt          DateTime            @updatedAt
+  updatedBy          String
+  project            Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee           User?               @relation("IssueAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  reporter           User                @relation("IssueReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  parent             Issue?              @relation("IssueSubtasks", fields: [parentId], references: [id], onDelete: SetNull)
+  subtasks           Issue[]             @relation("IssueSubtasks")
+  epic               Issue?              @relation("EpicIssues", fields: [epicId], references: [id], onDelete: SetNull)
+  epicIssues         Issue[]             @relation("EpicIssues")
+  sprint             Sprint?             @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  comments           IssueComment[]
+  blockingIssues     IssueDependency[]   @relation("BlockingIssue")
+  blockedByIssues    IssueDependency[]   @relation("BlockedIssue")
+  scopeChanges       SprintScopeChange[]
+  actionItems        ActionItem[]
+
+  @@unique([projectId, number])
+  @@unique([projectId, key])
+  @@index([projectId, status])
+  @@index([projectId, sprintId])
+  @@index([assigneeId])
+}
+
+model IssueDependency {
+  id              String              @id @default(uuid(7))
+  workspaceId     String
+  projectId       String
+  blockingIssueId String
+  blockedIssueId  String
+  type            IssueDependencyType
+  archivedAt      DateTime?
+  archivedBy      String?
+  createdAt       DateTime            @default(now())
+  createdBy       String
+  updatedAt       DateTime            @updatedAt
+  updatedBy       String
+  project         Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  blockingIssue   Issue               @relation("BlockingIssue", fields: [blockingIssueId], references: [id], onDelete: Cascade)
+  blockedIssue    Issue               @relation("BlockedIssue", fields: [blockedIssueId], references: [id], onDelete: Cascade)
+
+  @@unique([blockingIssueId, blockedIssueId, type])
+}
+
+model IssueComment {
+  id          String    @id @default(uuid(7))
+  workspaceId String
+  projectId   String
+  issueId     String
+  authorId    String
+  body        String
+  editedAt    DateTime?
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  createdBy   String
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issue       Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([issueId, createdAt])
+}
+
+model ActivityEvent {
+  id          String    @id @default(uuid(7))
+  workspaceId String
+  projectId   String?
+  entityType  String
+  entityId    String
+  action      String
+  actorId     String
+  changes     Json
+  occurredAt  DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor       User      @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([workspaceId, occurredAt])
+  @@index([projectId, occurredAt])
+}
+
+model AuditEvent {
+  id          String    @id @default(uuid(7))
+  workspaceId String
+  projectId   String?
+  actorId     String
+  action      String
+  entityPath  String
+  requestId   String
+  metadata    Json
+  occurredAt  DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor       User      @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([workspaceId, occurredAt])
+}
+
+model BoardConfig {
+  id          String    @id @default(uuid(7))
+  workspaceId String
+  projectId   String
+  name        String
+  kind        BoardKind
+  columnIds   String[]
+  filter      Json
+  archivedAt  DateTime?
+  archivedBy  String?
+  createdAt   DateTime  @default(now())
+  createdBy   String
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model WorkflowStatus {
+  id            String         @id @default(uuid(7))
+  workspaceId   String
+  projectId     String
+  name          String
+  category      StatusCategory
+  rank          String
+  color         String
+  transitionsTo String[]
+  createdAt     DateTime       @default(now())
+  createdBy     String
+  updatedAt     DateTime       @updatedAt
+  updatedBy     String
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, name])
+}
+
+model Sprint {
+  id             String              @id @default(uuid(7))
+  workspaceId    String
+  projectId      String
+  name           String
+  goal           String              @default("")
+  status         SprintStatus        @default(PLANNED)
+  startAt        DateTime?
+  endAt          DateTime?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  committedAt    DateTime?
+  archivedAt     DateTime?
+  archivedBy     String?
+  createdAt      DateTime            @default(now())
+  createdBy      String
+  updatedAt      DateTime            @updatedAt
+  updatedBy      String
+  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues         Issue[]
+  scopeChanges   SprintScopeChange[]
+  snapshots      SprintSnapshot[]
+  meetings       Meeting[]
+  retrospectives Retrospective[]
+
+  @@index([projectId, status])
+}
+
+model SprintScopeChange {
+  id          String          @id @default(uuid(7))
+  workspaceId String
+  projectId   String
+  sprintId    String
+  issueId     String
+  change      ScopeChangeType
+  actorId     String
+  occurredAt  DateTime        @default(now())
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sprint      Sprint          @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  issue       Issue           @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([sprintId, occurredAt])
+}
+
+model SprintSnapshot {
+  id                   String   @id @default(uuid(7))
+  workspaceId          String
+  projectId            String
+  sprintId             String
+  goal                 String
+  issueIds             String[]
+  completedIssueIds    String[]
+  storyPointsCommitted Float
+  storyPointsCompleted Float
+  snapshotAt           DateTime @default(now())
+  project              Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sprint               Sprint   @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+
+  @@index([sprintId, snapshotAt])
+}
+
+model ProjectGoal {
+  id          String     @id @default(uuid(7))
+  workspaceId String
+  projectId   String
+  title       String
+  description String     @default("")
+  status      GoalStatus @default(NOT_STARTED)
+  targetAt    DateTime?
+  ownerId     String?
+  archivedAt  DateTime?
+  archivedBy  String?
+  createdAt   DateTime   @default(now())
+  createdBy   String
+  updatedAt   DateTime   @updatedAt
+  updatedBy   String
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner       User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+}
+
+model ProjectStatusUpdate {
+  id              String       @id @default(uuid(7))
+  workspaceId     String
+  projectId       String
+  status          HealthStatus
+  summary         String
+  accomplishments String[]
+  risks           String[]
+  authorId        String
+  reportedAt      DateTime     @default(now())
+  createdAt       DateTime     @default(now())
+  createdBy       String
+  updatedAt       DateTime     @updatedAt
+  updatedBy       String
+  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author          User         @relation(fields: [authorId], references: [id], onDelete: Restrict)
+}
+
+model Milestone {
+  id          String          @id @default(uuid(7))
+  workspaceId String
+  projectId   String
+  title       String
+  description String          @default("")
+  status      MilestoneStatus @default(PLANNED)
+  dueAt       DateTime?
+  completedAt DateTime?
+  issueIds    String[]
+  archivedAt  DateTime?
+  archivedBy  String?
+  createdAt   DateTime        @default(now())
+  createdBy   String
+  updatedAt   DateTime        @updatedAt
+  updatedBy   String
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Meeting {
+  id             String              @id @default(uuid(7))
+  workspaceId    String
+  projectId      String
+  sprintId       String?
+  title          String
+  type           MeetingType
+  status         MeetingStatus       @default(SCHEDULED)
+  startsAt       DateTime
+  endsAt         DateTime
+  organizerId    String
+  facilitatorId  String?
+  minuteTakerId  String?
+  participantIds String[]
+  location       String              @default("")
+  meetingUrl     String?
+  archivedAt     DateTime?
+  archivedBy     String?
+  createdAt      DateTime            @default(now())
+  createdBy      String
+  updatedAt      DateTime            @updatedAt
+  updatedBy      String
+  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sprint         Sprint?             @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  organizer      User                @relation("MeetingOrganizer", fields: [organizerId], references: [id], onDelete: Restrict)
+  facilitator    User?               @relation("MeetingFacilitator", fields: [facilitatorId], references: [id], onDelete: SetNull)
+  minuteTaker    User?               @relation("MeetingMinuteTaker", fields: [minuteTakerId], references: [id], onDelete: SetNull)
+  agendaItems    MeetingAgendaItem[]
+  minutes        MeetingMinutes[]
+  decisions      Decision[]
+  actionItems    ActionItem[]
+  retrospectives Retrospective[]
+}
+
+model MeetingAgendaItem {
+  id              String   @id @default(uuid(7))
+  workspaceId     String
+  projectId       String
+  meetingId       String
+  title           String
+  description     String   @default("")
+  rank            String
+  presenterId     String?
+  durationMinutes Int?
+  createdAt       DateTime @default(now())
+  createdBy       String
+  updatedAt       DateTime @updatedAt
+  updatedBy       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  meeting         Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+}
+
+model MeetingMinutes {
+  id           String                  @id @default(uuid(7))
+  workspaceId  String
+  projectId    String
+  meetingId    String
+  status       MinutesStatus           @default(DRAFT)
+  version      Int                     @default(1)
+  summary      String
+  attendance   Json
+  finalizedAt  DateTime?
+  finalizedBy  String?
+  supersedesId String?
+  createdAt    DateTime                @default(now())
+  createdBy    String
+  updatedAt    DateTime                @updatedAt
+  updatedBy    String
+  project      Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  meeting      Meeting                 @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  supersedes   MeetingMinutes?         @relation("MinutesSuperseded", fields: [supersedesId], references: [id], onDelete: SetNull)
+  supersededBy MeetingMinutes[]        @relation("MinutesSuperseded")
+  versions     MeetingMinutesVersion[]
+  decisions    Decision[]
+  actionItems  ActionItem[]
+}
+
+model MeetingMinutesVersion {
+  id          String         @id @default(uuid(7))
+  workspaceId String
+  projectId   String
+  minutesId   String
+  version     Int
+  snapshot    Json
+  createdAt   DateTime       @default(now())
+  createdBy   String
+  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  minutes     MeetingMinutes @relation(fields: [minutesId], references: [id], onDelete: Cascade)
+
+  @@unique([minutesId, version])
+}
+
+model Decision {
+  id              String          @id @default(uuid(7))
+  workspaceId     String
+  projectId       String
+  meetingId       String?
+  minutesId       String?
+  title           String
+  context         String
+  rationale       String
+  status          DecisionStatus  @default(PROPOSED)
+  approverIds     String[]
+  decidedAt       DateTime?
+  supersedesId    String?
+  linkedRecordIds String[]
+  createdAt       DateTime        @default(now())
+  createdBy       String
+  updatedAt       DateTime        @updatedAt
+  updatedBy       String
+  project         Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  meeting         Meeting?        @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  minutes         MeetingMinutes? @relation(fields: [minutesId], references: [id], onDelete: SetNull)
+  supersedes      Decision?       @relation("DecisionSuperseded", fields: [supersedesId], references: [id], onDelete: SetNull)
+  supersededBy    Decision[]      @relation("DecisionSuperseded")
+  actionItems     ActionItem[]
+}
+
+model ActionItem {
+  id               String           @id @default(uuid(7))
+  workspaceId      String
+  projectId        String
+  sourceMeetingId  String?
+  sourceMinutesId  String?
+  sourceDecisionId String?
+  title            String
+  description      String           @default("")
+  status           ActionItemStatus @default(OPEN)
+  assigneeId       String?
+  dueAt            DateTime?
+  completedAt      DateTime?
+  linkedIssueId    String?
+  archivedAt       DateTime?
+  archivedBy       String?
+  createdAt        DateTime         @default(now())
+  createdBy        String
+  updatedAt        DateTime         @updatedAt
+  updatedBy        String
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  meeting          Meeting?         @relation(fields: [sourceMeetingId], references: [id], onDelete: SetNull)
+  minutes          MeetingMinutes?  @relation(fields: [sourceMinutesId], references: [id], onDelete: SetNull)
+  decision         Decision?        @relation(fields: [sourceDecisionId], references: [id], onDelete: SetNull)
+  assignee         User?            @relation("ActionItemAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  linkedIssue      Issue?           @relation(fields: [linkedIssueId], references: [id], onDelete: SetNull)
+}
+
+model DocumentFolder {
+  id             String            @id @default(uuid(7))
+  workspaceId    String
+  projectId      String
+  name           String
+  parentFolderId String?
+  rank           String
+  archivedAt     DateTime?
+  archivedBy     String?
+  createdAt      DateTime          @default(now())
+  createdBy      String
+  updatedAt      DateTime          @updatedAt
+  updatedBy      String
+  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentFolder   DocumentFolder?   @relation("FolderHierarchy", fields: [parentFolderId], references: [id], onDelete: Cascade)
+  subfolders     DocumentFolder[]  @relation("FolderHierarchy")
+  documents      ProjectDocument[]
+}
+
+model ProjectDocument {
+  id             String            @id @default(uuid(7))
+  workspaceId    String
+  projectId      String
+  folderId       String?
+  title          String
+  body           String
+  status         DocumentStatus    @default(DRAFT)
+  currentVersion Int               @default(1)
+  archivedAt     DateTime?
+  archivedBy     String?
+  createdAt      DateTime          @default(now())
+  createdBy      String
+  updatedAt      DateTime          @updatedAt
+  updatedBy      String
+  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folder         DocumentFolder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  versions       DocumentVersion[]
+  requirements   Requirement[]
+}
+
+model DocumentVersion {
+  id          String          @id @default(uuid(7))
+  workspaceId String
+  projectId   String
+  documentId  String
+  version     Int
+  title       String
+  body        String
+  createdAt   DateTime        @default(now())
+  createdBy   String
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  document    ProjectDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, version])
+}
+
+model Requirement {
+  id               String            @id @default(uuid(7))
+  workspaceId      String
+  projectId        String
+  key              String
+  title            String
+  description      String
+  kind             RequirementKind
+  status           RequirementStatus @default(PROPOSED)
+  priority         Priority          @default(MEDIUM)
+  linkedIssueIds   String[]
+  sourceDocumentId String?
+  archivedAt       DateTime?
+  archivedBy       String?
+  createdAt        DateTime          @default(now())
+  createdBy        String
+  updatedAt        DateTime          @updatedAt
+  updatedBy        String
+  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceDocument   ProjectDocument?  @relation(fields: [sourceDocumentId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, key])
+}
+
+model Retrospective {
+  id            String                  @id @default(uuid(7))
+  workspaceId   String
+  projectId     String
+  sprintId      String
+  meetingId     String?
+  template      RetrospectiveTemplate   @default(WENT_WELL_IMPROVE_ACTIONS)
+  status        RetrospectiveStatus     @default(OPEN)
+  facilitatorId String
+  closedAt      DateTime?
+  archivedAt    DateTime?
+  archivedBy    String?
+  createdAt     DateTime                @default(now())
+  createdBy     String
+  updatedAt     DateTime                @updatedAt
+  updatedBy     String
+  project       Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sprint        Sprint                  @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  meeting       Meeting?                @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  facilitator   User                    @relation("RetrospectiveFacilitator", fields: [facilitatorId], references: [id], onDelete: Restrict)
+  feedback      RetrospectiveFeedback[]
+}
+
+model RetrospectiveFeedback {
+  id              String           @id @default(uuid(7))
+  workspaceId     String
+  projectId       String
+  retrospectiveId String
+  authorId        String?
+  category        FeedbackCategory
+  body            String
+  anonymous       Boolean          @default(false)
+  voteCount       Int              @default(0)
+  createdAt       DateTime         @default(now())
+  createdBy       String
+  updatedAt       DateTime         @updatedAt
+  updatedBy       String
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  retrospective   Retrospective    @relation(fields: [retrospectiveId], references: [id], onDelete: Cascade)
+  author          User?            @relation(fields: [authorId], references: [id], onDelete: SetNull)
+}
+
+model Risk {
+  id             String     @id @default(uuid(7))
+  workspaceId    String
+  projectId      String
+  title          String
+  description    String
+  status         RiskStatus @default(IDENTIFIED)
+  probability    Int
+  impact         Int
+  ownerId        String?
+  mitigationPlan String     @default("")
+  reviewAt       DateTime?
+  archivedAt     DateTime?
+  archivedBy     String?
+  createdAt      DateTime   @default(now())
+  createdBy      String
+  updatedAt      DateTime   @updatedAt
+  updatedBy      String
+  project        Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner          User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+}
+
+model Stakeholder {
+  id           String         @id @default(uuid(7))
+  workspaceId  String
+  projectId    String
+  name         String
+  email        String?
+  organisation String
+  role         String
+  influence    InfluenceLevel @default(MEDIUM)
+  interest     InterestLevel  @default(MEDIUM)
+  archivedAt   DateTime?
+  archivedBy   String?
+  createdAt    DateTime       @default(now())
+  createdBy    String
+  updatedAt    DateTime       @updatedAt
+  updatedBy    String
+  project      Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ChangeRequest {
+  id             String              @id @default(uuid(7))
+  workspaceId    String
+  projectId      String
+  title          String
+  description    String
+  status         ChangeRequestStatus @default(PROPOSED)
+  requesterId    String
+  approverId     String?
+  decisionAt     DateTime?
+  linkedIssueIds String[]
+  archivedAt     DateTime?
+  archivedBy     String?
+  createdAt      DateTime            @default(now())
+  createdBy      String
+  updatedAt      DateTime            @updatedAt
+  updatedBy      String
+  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requester      User                @relation("ChangeRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  approver       User?               @relation("ChangeApprover", fields: [approverId], references: [id], onDelete: SetNull)
+}
+
+model Notification {
+  id          String    @id @default(uuid(7))
+  workspaceId String
+  recipientId String
+  type        String
+  title       String
+  body        String
+  targetPath  String?
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  recipient   User      @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, readAt])
+}
+
+model SavedFilter {
+  id          String    @id @default(uuid(7))
+  workspaceId String
+  projectId   String?
+  ownerId     String
+  name        String
+  query       Json
+  shared      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  createdBy   String
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+}
+
+model Integration {
+  id                String              @id @default(uuid(7))
+  workspaceId       String
+  projectId         String
+  provider          IntegrationProvider
+  status            IntegrationStatus   @default(ACTIVE)
+  externalId        String
+  settings          Json
+  secretRef         String?
+  connectedBy       String
+  archivedAt        DateTime?
+  archivedBy        String?
+  createdAt         DateTime            @default(now())
+  createdBy         String
+  updatedAt         DateTime            @updatedAt
+  updatedBy         String
+  project           Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  connector         User                @relation("IntegrationConnector", fields: [connectedBy], references: [id], onDelete: Restrict)
+  webhookDeliveries WebhookDelivery[]
+}
+
+model WebhookDelivery {
+  id             String        @id @default(uuid(7))
+  workspaceId    String
+  projectId      String
+  integrationId  String
+  idempotencyKey String
+  eventType      String
+  status         WebhookStatus @default(PENDING)
+  attempts       Int           @default(0)
+  receivedAt     DateTime      @default(now())
+  completedAt    DateTime?
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  integration    Integration   @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, idempotencyKey])
+}
+
+model ClientPortalItem {
+  id               String       @id @default(uuid(7))
+  workspaceId      String
+  projectId        String
+  sourceCollection String
+  sourceId         String
+  title            String
+  summary          String
+  content          Json
+  status           PortalStatus @default(PUBLISHED)
+  publishedAt      DateTime     @default(now())
+  publishedBy      String
+  sourceUpdatedAt  DateTime
+  project          Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  publisher        User         @relation("PortalPublisher", fields: [publishedBy], references: [id], onDelete: Restrict)
+
+  @@index([projectId, status])
+}
+
+model StorageObject {
+  id          String    @id @default(uuid(7))
+  workspaceId String
+  projectId   String?
+  bucket      String
+  key         String
+  fileName    String
+  contentType String
+  sizeBytes   BigInt
+  etag        String?
+  uploaderId  String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  archivedAt  DateTime?
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  uploader    User      @relation("FileUploader", fields: [uploaderId], references: [id], onDelete: Restrict)
+
+  @@unique([bucket, key])
+  @@index([workspaceId, projectId])
+}
+
+model Session {
+  id           String   @id
+  userId       String
+  createdAt    DateTime
+  expiresAt    DateTime
+  lastActiveAt DateTime
+  mfa          String?
+  metadata     Json?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model RefreshToken {
+  id              String    @id
+  familyId        String
+  userId          String
+  createdAt       DateTime
+  expiresAt       DateTime
+  familyExpiresAt DateTime
+  usedAt          DateTime?
+  revoked         Boolean   @default(false)
+  claims          Json?
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([userId])
+  @@index([familyExpiresAt])
+  @@map("refresh_tokens")
+}
+
+model MagicLink {
+  id         String   @id
+  email      String
+  createdAt  DateTime
+  expiresAt  DateTime
+  redirectTo String?
+
+  @@index([expiresAt])
+  @@map("magic_links")
+}
+
+model EmailToken {
+  id          String   @id
+  purpose     String
+  userId      String
+  email       String
+  fingerprint String?
+  createdAt   DateTime
+  expiresAt   DateTime
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+  @@map("email_tokens")
+}
+
+model ApiKey {
+  id        String   @id
+  userId    String
+  hash      String
+  createdAt DateTime
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
+}
