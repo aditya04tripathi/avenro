@@ -652,6 +652,34 @@ One additional local database, `avenro_test_022empty`, was created before the te
 
 **Remaining:** The migration's negative preflight branches and every individual cross-tenant relation are not each covered by automated tests; acceptance directly verified the clean install, legacy fixture, and a representative mixed-tenant FK. Existing application database conflicts/data preservation remain unknown and are a production release preflight, not part of this local acceptance. Do not run against `template1`, `avenro`, or any unidentified external/production database. Do not inspect, reset, or drop `avenro_test_022empty`.
 
+### 03.1 Wire persistent email/password authentication — 29 October 2026
+
+**Task:** 03.1 Wire persistent email/password authentication.
+
+**State:** IMPLEMENTED; ACCEPTANCE BLOCKED before external exposure. Email/password routes, persistent sessions, cookie protections, and PostgreSQL integration gates below passed. No distributed authentication rate-limit infrastructure is configured in `@avenro/api`, so the task's rate-limit gate is not met and these public registration/sign-in routes are not ready for external exposure. Do not mark this task complete until a distributed limiter and its failure policy are implemented and verified.
+
+**Prerequisites:** 01.2, 02.1, and 02.2 are verified above. The installed `@nestjs/authentication` 0.1.2 declarations were inspected for `AuthenticationModule.forRoot`, global guard and `@Public`, `AuthenticationStorage`, `AuthenticationRegistry`, `SessionCookieProvider`, `SessionService`, `SignInService`, and the `@nestjs/authentication/testing` contract API. The package's missing-user `PasswordHasher.verify` timing behavior and SessionStore concurrency contract were checked from installed declarations and implementation.
+
+**Source:** `src/app.module.ts`, `src/auth/*`, `src/health/health.controller.ts`, `src/app.controller.ts`, `src/openapi/openapi.ts`, `test/auth.integration.e2e-spec.ts`, `test/integration/authentication-store.integration.spec.ts`, and `test/openapi.mjs`. No schema migration or generated client edit was needed.
+
+**Behavior:** Register and sign-in are public routes; missing-user and wrong-password failures share the same 401 body apart from request correlation ids. Duplicate and concurrent registration return the same generic acknowledgement; the database unique constraint resolves the race. User and session results are projected without password hashes or raw session tokens. Sessions use the library's SHA-256 token ids, `__Host-sid` secure/HttpOnly/SameSite=Lax cookie, 14-day absolute expiry, 3-day idle expiry, sign-in rotation, sign-out, and per-session revocation. Unauthenticated routes are denied by the library's global guard except explicit `@Public()` endpoints. The shared origin allowlist blocks untrusted-origin mutations, and the library's sign-in service rejects login CSRF. Auth routes and cookie scheme are included in the shared OpenAPI contract.
+
+**Database fixtures:** The configured local URL was only parsed in memory to assert `localhost:51214/template1`; no connection or query was made to `template1`. A local maintenance connection to `/postgres` created fresh database `avenro_test_authdbea3798e7` from `template0`. The helper validated its derived `TEST_DATABASE_URL` before use, and the repository's immutable migrations were applied. A first fresh fixture, `avenro_test_auth_049a0f40a1`, had an extra underscore rejected by the helper before it was connected to; it was left untouched. Both fixtures are preserved: no reset or drop was run.
+
+**Evidence:**
+
+- `pnpm --filter @avenro/api format` — exit 0.
+- `pnpm --filter @avenro/api test` — exit 0; 13 passed, 7 PostgreSQL contract cases skipped in this default no-test-URL invocation.
+- `pnpm --filter @avenro/api test:e2e` with `TEST_DATABASE_URL` derived and validated by `test/support/test-database.ts` — exit 0; 9 passed across NodeAdapter transport tests and PostgreSQL-backed auth route tests. Covers parallel register, generic duplicate registration, missing/wrong-password parity, cookie flags, session rotation, session listing/revocation, expiration, sign-out, and cross-origin mutation rejection.
+- `test/integration/authentication-store.integration.spec.ts` with the same helper-validated fixture — exit 0; all 7 `authenticationStoreContract()` session cases passed with `concurrent: true`, including monotonic touch, expiry pruning, and rotation/revocation races.
+- `pnpm --filter @avenro/api exec tsc --noEmit -p tsconfig.build.json`, `pnpm --filter @avenro/api lint`, and `pnpm --filter @avenro/api build` — exit 0.
+- `pnpm --filter @avenro/api test:contract` — exit 0; built OpenAPI route set, DTOs, cookie scheme, UI and JSON contracts passed.
+- `pnpm --filter @avenro/api test:built-smoke` — exit 0; built AppModule started and served a public route through NodeAdapter.
+- The configured rate-limit package/store inventory (`@avenro/api` dependencies and `apps/api/src`) has no configured authentication limiter, Redis client, or distributed limit store. No in-memory-only limiter was added.
+- `git diff --check` — exit 0.
+
+**Remaining:** Implement a distributed registration/sign-in rate limiter and document/test its outage policy before external exposure; the current public routes otherwise permit unlimited attempts. Workspace authorization and later recovery/email-verification/OIDC flows are separate tasks. No deployment or production database access occurred.
+
 ## 9. Reference index
 
 Use the `nestjs-docs` skill and its task-relevant chapters, discovered through the available skill catalog. The local corpus spans Nest 11–12 and may include features newer than an installed package. Installed declarations, package peers and runtime tests decide whether an example is usable. Read codebase-design for module/interface/seam discipline and antislop-code for comment hygiene.
