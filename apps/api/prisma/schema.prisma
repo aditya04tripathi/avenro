@@ -68,15 +68,6 @@ enum IssueType {
   SUBTASK
 }
 
-enum IssueStatus {
-  BACKLOG
-  SELECTED
-  IN_PROGRESS
-  REVIEW
-  DONE
-  CANCELLED
-}
-
 enum Priority {
   LOWEST
   LOW
@@ -325,7 +316,7 @@ model Workspace {
   members        WorkspaceMember[]
   invitations    WorkspaceInvitation[]
   projectKeys    ProjectKeyReservation[]
-  projects       Project[]
+  project        Project?
   notifications  Notification[]
   savedFilters   SavedFilter[]
   activities     ActivityEvent[]
@@ -347,6 +338,8 @@ model WorkspaceMember {
   updatedAt   DateTime         @updatedAt
   workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectRoles ProjectMembership[]
 
   @@unique([workspaceId, userId])
   @@index([userId])
@@ -378,14 +371,15 @@ model ProjectKeyReservation {
   createdAt   DateTime  @default(now())
   createdBy   String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project   @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
 
   @@unique([workspaceId, key])
+  @@unique([workspaceId, projectId, id])
 }
 
 model Project {
   id                    String                  @id @default(uuid(7))
-  workspaceId           String
+  workspaceId           String                  @unique
   name                  String
   key                   String
   description           String                  @default("")
@@ -406,6 +400,9 @@ model Project {
   creator               User                    @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: Restrict)
   memberships           ProjectMembership[]
   keyReservations       ProjectKeyReservation[]
+  activities            ActivityEvent[]
+  auditEvents           AuditEvent[]
+  savedFilters          SavedFilter[]
   issues                Issue[]
   issueDependencies     IssueDependency[]
   issueComments         IssueComment[]
@@ -438,24 +435,27 @@ model Project {
   storageObjects        StorageObject[]
 
   @@unique([workspaceId, key])
+  @@unique([workspaceId, id])
   @@index([workspaceId, status])
 }
 
 model ProjectMembership {
-  id          String           @id @default(uuid(7))
-  workspaceId String
-  projectId   String
-  userId      String
-  roles       ProjectRole[]
-  status      MembershipStatus @default(ACTIVE)
-  createdAt   DateTime         @default(now())
-  createdBy   String
-  updatedAt   DateTime         @updatedAt
-  updatedBy   String
-  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String           @id @default(uuid(7))
+  workspaceId     String
+  projectId       String
+  userId          String
+  roles           ProjectRole[]
+  status          MembershipStatus @default(ACTIVE)
+  createdAt       DateTime         @default(now())
+  createdBy       String
+  updatedAt       DateTime         @updatedAt
+  updatedBy       String
+  project         Project          @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  workspaceMember WorkspaceMember  @relation(fields: [workspaceId, userId], references: [workspaceId, userId], onDelete: Restrict)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
+  @@unique([workspaceId, projectId, id])
   @@index([workspaceId, userId])
 }
 
@@ -469,9 +469,10 @@ model Issue {
   title              String
   description        String              @default("")
   acceptanceCriteria String[]
-  status             IssueStatus         @default(BACKLOG)
+  workflowStatusId   String
   priority           Priority            @default(MEDIUM)
   rank               String
+  revision           Int                 @default(1)
   assigneeId         String?
   reporterId         String
   parentId           String?
@@ -486,14 +487,15 @@ model Issue {
   createdBy          String
   updatedAt          DateTime            @updatedAt
   updatedBy          String
-  project            Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project            Project             @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  workflowStatus     WorkflowStatus      @relation(fields: [workspaceId, projectId, workflowStatusId], references: [workspaceId, projectId, id], onDelete: Restrict)
   assignee           User?               @relation("IssueAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   reporter           User                @relation("IssueReporter", fields: [reporterId], references: [id], onDelete: Restrict)
-  parent             Issue?              @relation("IssueSubtasks", fields: [parentId], references: [id], onDelete: SetNull)
+  parent             Issue?              @relation("IssueSubtasks", fields: [workspaceId, projectId, parentId], references: [workspaceId, projectId, id], onDelete: Restrict)
   subtasks           Issue[]             @relation("IssueSubtasks")
-  epic               Issue?              @relation("EpicIssues", fields: [epicId], references: [id], onDelete: SetNull)
+  epic               Issue?              @relation("EpicIssues", fields: [workspaceId, projectId, epicId], references: [workspaceId, projectId, id], onDelete: Restrict)
   epicIssues         Issue[]             @relation("EpicIssues")
-  sprint             Sprint?             @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  sprint             Sprint?             @relation(fields: [workspaceId, projectId, sprintId], references: [workspaceId, projectId, id], onDelete: Restrict)
   comments           IssueComment[]
   blockingIssues     IssueDependency[]   @relation("BlockingIssue")
   blockedByIssues    IssueDependency[]   @relation("BlockedIssue")
@@ -502,7 +504,8 @@ model Issue {
 
   @@unique([projectId, number])
   @@unique([projectId, key])
-  @@index([projectId, status])
+  @@unique([workspaceId, projectId, id])
+  @@index([projectId, workflowStatusId])
   @@index([projectId, sprintId])
   @@index([assigneeId])
 }
@@ -520,11 +523,12 @@ model IssueDependency {
   createdBy       String
   updatedAt       DateTime            @updatedAt
   updatedBy       String
-  project         Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  blockingIssue   Issue               @relation("BlockingIssue", fields: [blockingIssueId], references: [id], onDelete: Cascade)
-  blockedIssue    Issue               @relation("BlockedIssue", fields: [blockedIssueId], references: [id], onDelete: Cascade)
+  project         Project             @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  blockingIssue   Issue               @relation("BlockingIssue", fields: [workspaceId, projectId, blockingIssueId], references: [workspaceId, projectId, id], onDelete: Cascade)
+  blockedIssue    Issue               @relation("BlockedIssue", fields: [workspaceId, projectId, blockedIssueId], references: [workspaceId, projectId, id], onDelete: Cascade)
 
   @@unique([blockingIssueId, blockedIssueId, type])
+  @@unique([workspaceId, projectId, id])
 }
 
 model IssueComment {
@@ -540,10 +544,11 @@ model IssueComment {
   createdBy   String
   updatedAt   DateTime  @updatedAt
   updatedBy   String
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  issue       Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  project     Project   @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  issue       Issue     @relation(fields: [workspaceId, projectId, issueId], references: [workspaceId, projectId, id], onDelete: Cascade)
   author      User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
 
+  @@unique([workspaceId, projectId, id])
   @@index([issueId, createdAt])
 }
 
@@ -558,6 +563,7 @@ model ActivityEvent {
   changes     Json
   occurredAt  DateTime  @default(now())
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project?  @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Restrict)
   actor       User      @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([workspaceId, occurredAt])
@@ -575,44 +581,85 @@ model AuditEvent {
   metadata    Json
   occurredAt  DateTime  @default(now())
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project?  @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Restrict)
   actor       User      @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([workspaceId, occurredAt])
 }
 
 model BoardConfig {
-  id          String    @id @default(uuid(7))
+  id          String        @id @default(uuid(7))
   workspaceId String
   projectId   String
   name        String
   kind        BoardKind
-  columnIds   String[]
   filter      Json
+  revision    Int           @default(1)
   archivedAt  DateTime?
   archivedBy  String?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime      @default(now())
   createdBy   String
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime      @updatedAt
   updatedBy   String
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project       @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  columns     BoardColumn[]
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model WorkflowStatus {
-  id            String         @id @default(uuid(7))
-  workspaceId   String
-  projectId     String
-  name          String
-  category      StatusCategory
-  rank          String
-  color         String
-  transitionsTo String[]
-  createdAt     DateTime       @default(now())
-  createdBy     String
-  updatedAt     DateTime       @updatedAt
-  updatedBy     String
-  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id           String               @id @default(uuid(7))
+  workspaceId  String
+  projectId    String
+  name         String
+  category     StatusCategory
+  rank         String
+  color        String
+  revision     Int                  @default(1)
+  createdAt    DateTime             @default(now())
+  createdBy    String
+  updatedAt    DateTime             @updatedAt
+  updatedBy    String
+  project      Project              @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  issues       Issue[]
+  outgoing     WorkflowTransition[] @relation("WorkflowTransitionFrom")
+  incoming     WorkflowTransition[] @relation("WorkflowTransitionTo")
+  boardColumns BoardColumn[]
 
   @@unique([projectId, name])
+  @@unique([workspaceId, projectId, id])
+}
+
+model WorkflowTransition {
+  id           String         @id @default(uuid(7))
+  workspaceId  String
+  projectId    String
+  fromStatusId String
+  toStatusId   String
+  createdAt    DateTime       @default(now())
+  fromStatus   WorkflowStatus @relation("WorkflowTransitionFrom", fields: [workspaceId, projectId, fromStatusId], references: [workspaceId, projectId, id], onDelete: Cascade)
+  toStatus     WorkflowStatus @relation("WorkflowTransitionTo", fields: [workspaceId, projectId, toStatusId], references: [workspaceId, projectId, id], onDelete: Cascade)
+
+  @@unique([workspaceId, projectId, fromStatusId, toStatusId])
+}
+
+model BoardColumn {
+  id               String          @id @default(uuid(7))
+  workspaceId      String
+  projectId        String
+  boardConfigId    String
+  workflowStatusId String?
+  legacyId         String?
+  name             String
+  rank             String
+  createdAt        DateTime        @default(now())
+  createdBy        String
+  boardConfig      BoardConfig     @relation(fields: [workspaceId, projectId, boardConfigId], references: [workspaceId, projectId, id], onDelete: Cascade)
+  workflowStatus   WorkflowStatus? @relation(fields: [workspaceId, projectId, workflowStatusId], references: [workspaceId, projectId, id], onDelete: Restrict)
+
+  @@unique([workspaceId, projectId, boardConfigId, workflowStatusId])
+  @@unique([workspaceId, projectId, boardConfigId, legacyId])
+  @@index([workspaceId, projectId, rank])
 }
 
 model Sprint {
@@ -622,6 +669,7 @@ model Sprint {
   name           String
   goal           String              @default("")
   status         SprintStatus        @default(PLANNED)
+  revision       Int                 @default(1)
   startAt        DateTime?
   endAt          DateTime?
   startedAt      DateTime?
@@ -633,13 +681,14 @@ model Sprint {
   createdBy      String
   updatedAt      DateTime            @updatedAt
   updatedBy      String
-  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project        Project             @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
   issues         Issue[]
   scopeChanges   SprintScopeChange[]
   snapshots      SprintSnapshot[]
   meetings       Meeting[]
   retrospectives Retrospective[]
 
+  @@unique([workspaceId, projectId, id])
   @@index([projectId, status])
 }
 
@@ -652,10 +701,11 @@ model SprintScopeChange {
   change      ScopeChangeType
   actorId     String
   occurredAt  DateTime        @default(now())
-  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sprint      Sprint          @relation(fields: [sprintId], references: [id], onDelete: Cascade)
-  issue       Issue           @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  project     Project         @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  sprint      Sprint          @relation(fields: [workspaceId, projectId, sprintId], references: [workspaceId, projectId, id], onDelete: Cascade)
+  issue       Issue           @relation(fields: [workspaceId, projectId, issueId], references: [workspaceId, projectId, id], onDelete: Cascade)
 
+  @@unique([workspaceId, projectId, id])
   @@index([sprintId, occurredAt])
 }
 
@@ -670,9 +720,10 @@ model SprintSnapshot {
   storyPointsCommitted Float
   storyPointsCompleted Float
   snapshotAt           DateTime @default(now())
-  project              Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sprint               Sprint   @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  project              Project  @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  sprint               Sprint   @relation(fields: [workspaceId, projectId, sprintId], references: [workspaceId, projectId, id], onDelete: Cascade)
 
+  @@unique([workspaceId, projectId, id])
   @@index([sprintId, snapshotAt])
 }
 
@@ -691,8 +742,10 @@ model ProjectGoal {
   createdBy   String
   updatedAt   DateTime   @updatedAt
   updatedBy   String
-  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project    @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
   owner       User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model ProjectStatusUpdate {
@@ -709,8 +762,10 @@ model ProjectStatusUpdate {
   createdBy       String
   updatedAt       DateTime     @updatedAt
   updatedBy       String
-  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project         Project      @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
   author          User         @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model Milestone {
@@ -729,7 +784,9 @@ model Milestone {
   createdBy   String
   updatedAt   DateTime        @updatedAt
   updatedBy   String
-  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project         @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model Meeting {
@@ -740,6 +797,7 @@ model Meeting {
   title          String
   type           MeetingType
   status         MeetingStatus       @default(SCHEDULED)
+  revision       Int                 @default(1)
   startsAt       DateTime
   endsAt         DateTime
   organizerId    String
@@ -754,8 +812,8 @@ model Meeting {
   createdBy      String
   updatedAt      DateTime            @updatedAt
   updatedBy      String
-  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sprint         Sprint?             @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  project        Project             @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  sprint         Sprint?             @relation(fields: [workspaceId, projectId, sprintId], references: [workspaceId, projectId, id], onDelete: Restrict)
   organizer      User                @relation("MeetingOrganizer", fields: [organizerId], references: [id], onDelete: Restrict)
   facilitator    User?               @relation("MeetingFacilitator", fields: [facilitatorId], references: [id], onDelete: SetNull)
   minuteTaker    User?               @relation("MeetingMinuteTaker", fields: [minuteTakerId], references: [id], onDelete: SetNull)
@@ -764,6 +822,8 @@ model Meeting {
   decisions      Decision[]
   actionItems    ActionItem[]
   retrospectives Retrospective[]
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model MeetingAgendaItem {
@@ -780,8 +840,10 @@ model MeetingAgendaItem {
   createdBy       String
   updatedAt       DateTime @updatedAt
   updatedBy       String
-  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  meeting         Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  project         Project  @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  meeting         Meeting  @relation(fields: [workspaceId, projectId, meetingId], references: [workspaceId, projectId, id], onDelete: Cascade)
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model MeetingMinutes {
@@ -791,6 +853,7 @@ model MeetingMinutes {
   meetingId    String
   status       MinutesStatus           @default(DRAFT)
   version      Int                     @default(1)
+  revision     Int                     @default(1)
   summary      String
   attendance   Json
   finalizedAt  DateTime?
@@ -800,13 +863,15 @@ model MeetingMinutes {
   createdBy    String
   updatedAt    DateTime                @updatedAt
   updatedBy    String
-  project      Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      Project                 @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
   meeting      Meeting                 @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  supersedes   MeetingMinutes?         @relation("MinutesSuperseded", fields: [supersedesId], references: [id], onDelete: SetNull)
+  supersedes   MeetingMinutes?         @relation("MinutesSuperseded", fields: [workspaceId, projectId, supersedesId], references: [workspaceId, projectId, id], onDelete: Restrict)
   supersededBy MeetingMinutes[]        @relation("MinutesSuperseded")
   versions     MeetingMinutesVersion[]
   decisions    Decision[]
   actionItems  ActionItem[]
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model MeetingMinutesVersion {
@@ -818,10 +883,11 @@ model MeetingMinutesVersion {
   snapshot    Json
   createdAt   DateTime       @default(now())
   createdBy   String
-  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  minutes     MeetingMinutes @relation(fields: [minutesId], references: [id], onDelete: Cascade)
+  project     Project        @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  minutes     MeetingMinutes @relation(fields: [workspaceId, projectId, minutesId], references: [workspaceId, projectId, id], onDelete: Cascade)
 
   @@unique([minutesId, version])
+  @@unique([workspaceId, projectId, id])
 }
 
 model Decision {
@@ -834,6 +900,7 @@ model Decision {
   context         String
   rationale       String
   status          DecisionStatus  @default(PROPOSED)
+  revision        Int             @default(1)
   approverIds     String[]
   decidedAt       DateTime?
   supersedesId    String?
@@ -842,12 +909,14 @@ model Decision {
   createdBy       String
   updatedAt       DateTime        @updatedAt
   updatedBy       String
-  project         Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  meeting         Meeting?        @relation(fields: [meetingId], references: [id], onDelete: SetNull)
-  minutes         MeetingMinutes? @relation(fields: [minutesId], references: [id], onDelete: SetNull)
-  supersedes      Decision?       @relation("DecisionSuperseded", fields: [supersedesId], references: [id], onDelete: SetNull)
+  project         Project         @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  meeting         Meeting?        @relation(fields: [workspaceId, projectId, meetingId], references: [workspaceId, projectId, id], onDelete: Restrict)
+  minutes         MeetingMinutes? @relation(fields: [workspaceId, projectId, minutesId], references: [workspaceId, projectId, id], onDelete: Restrict)
+  supersedes      Decision?       @relation("DecisionSuperseded", fields: [workspaceId, projectId, supersedesId], references: [workspaceId, projectId, id], onDelete: Restrict)
   supersededBy    Decision[]      @relation("DecisionSuperseded")
   actionItems     ActionItem[]
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model ActionItem {
@@ -860,6 +929,7 @@ model ActionItem {
   title            String
   description      String           @default("")
   status           ActionItemStatus @default(OPEN)
+  revision         Int              @default(1)
   assigneeId       String?
   dueAt            DateTime?
   completedAt      DateTime?
@@ -870,12 +940,14 @@ model ActionItem {
   createdBy        String
   updatedAt        DateTime         @updatedAt
   updatedBy        String
-  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  meeting          Meeting?         @relation(fields: [sourceMeetingId], references: [id], onDelete: SetNull)
-  minutes          MeetingMinutes?  @relation(fields: [sourceMinutesId], references: [id], onDelete: SetNull)
-  decision         Decision?        @relation(fields: [sourceDecisionId], references: [id], onDelete: SetNull)
+  project          Project          @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  meeting          Meeting?         @relation(fields: [workspaceId, projectId, sourceMeetingId], references: [workspaceId, projectId, id], onDelete: Restrict)
+  minutes          MeetingMinutes?  @relation(fields: [workspaceId, projectId, sourceMinutesId], references: [workspaceId, projectId, id], onDelete: Restrict)
+  decision         Decision?        @relation(fields: [workspaceId, projectId, sourceDecisionId], references: [workspaceId, projectId, id], onDelete: Restrict)
   assignee         User?            @relation("ActionItemAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  linkedIssue      Issue?           @relation(fields: [linkedIssueId], references: [id], onDelete: SetNull)
+  linkedIssue      Issue?           @relation(fields: [workspaceId, projectId, linkedIssueId], references: [workspaceId, projectId, id], onDelete: Restrict)
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model DocumentFolder {
@@ -891,10 +963,12 @@ model DocumentFolder {
   createdBy      String
   updatedAt      DateTime          @updatedAt
   updatedBy      String
-  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parentFolder   DocumentFolder?   @relation("FolderHierarchy", fields: [parentFolderId], references: [id], onDelete: Cascade)
+  project        Project           @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  parentFolder   DocumentFolder?   @relation("FolderHierarchy", fields: [workspaceId, projectId, parentFolderId], references: [workspaceId, projectId, id], onDelete: Cascade)
   subfolders     DocumentFolder[]  @relation("FolderHierarchy")
   documents      ProjectDocument[]
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model ProjectDocument {
@@ -906,16 +980,19 @@ model ProjectDocument {
   body           String
   status         DocumentStatus    @default(DRAFT)
   currentVersion Int               @default(1)
+  revision       Int               @default(1)
   archivedAt     DateTime?
   archivedBy     String?
   createdAt      DateTime          @default(now())
   createdBy      String
   updatedAt      DateTime          @updatedAt
   updatedBy      String
-  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  folder         DocumentFolder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  project        Project           @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  folder         DocumentFolder?   @relation(fields: [workspaceId, projectId, folderId], references: [workspaceId, projectId, id], onDelete: Restrict)
   versions       DocumentVersion[]
   requirements   Requirement[]
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model DocumentVersion {
@@ -928,10 +1005,11 @@ model DocumentVersion {
   body        String
   createdAt   DateTime        @default(now())
   createdBy   String
-  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  document    ProjectDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  project     Project         @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  document    ProjectDocument @relation(fields: [workspaceId, projectId, documentId], references: [workspaceId, projectId, id], onDelete: Cascade)
 
   @@unique([documentId, version])
+  @@unique([workspaceId, projectId, id])
 }
 
 model Requirement {
@@ -952,10 +1030,11 @@ model Requirement {
   createdBy        String
   updatedAt        DateTime          @updatedAt
   updatedBy        String
-  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sourceDocument   ProjectDocument?  @relation(fields: [sourceDocumentId], references: [id], onDelete: SetNull)
+  project          Project           @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  sourceDocument   ProjectDocument?  @relation(fields: [workspaceId, projectId, sourceDocumentId], references: [workspaceId, projectId, id], onDelete: Restrict)
 
   @@unique([projectId, key])
+  @@unique([workspaceId, projectId, id])
 }
 
 model Retrospective {
@@ -974,11 +1053,13 @@ model Retrospective {
   createdBy     String
   updatedAt     DateTime                @updatedAt
   updatedBy     String
-  project       Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sprint        Sprint                  @relation(fields: [sprintId], references: [id], onDelete: Cascade)
-  meeting       Meeting?                @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  project       Project                 @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  sprint        Sprint                  @relation(fields: [workspaceId, projectId, sprintId], references: [workspaceId, projectId, id], onDelete: Cascade)
+  meeting       Meeting?                @relation(fields: [workspaceId, projectId, meetingId], references: [workspaceId, projectId, id], onDelete: Restrict)
   facilitator   User                    @relation("RetrospectiveFacilitator", fields: [facilitatorId], references: [id], onDelete: Restrict)
   feedback      RetrospectiveFeedback[]
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model RetrospectiveFeedback {
@@ -995,9 +1076,11 @@ model RetrospectiveFeedback {
   createdBy       String
   updatedAt       DateTime         @updatedAt
   updatedBy       String
-  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  retrospective   Retrospective    @relation(fields: [retrospectiveId], references: [id], onDelete: Cascade)
+  project         Project          @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  retrospective   Retrospective    @relation(fields: [workspaceId, projectId, retrospectiveId], references: [workspaceId, projectId, id], onDelete: Cascade)
   author          User?            @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model Risk {
@@ -1018,8 +1101,10 @@ model Risk {
   createdBy      String
   updatedAt      DateTime   @updatedAt
   updatedBy      String
-  project        Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project        Project    @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
   owner          User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model Stakeholder {
@@ -1038,7 +1123,9 @@ model Stakeholder {
   createdBy    String
   updatedAt    DateTime       @updatedAt
   updatedBy    String
-  project      Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      Project        @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model ChangeRequest {
@@ -1058,9 +1145,11 @@ model ChangeRequest {
   createdBy      String
   updatedAt      DateTime            @updatedAt
   updatedBy      String
-  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project        Project             @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
   requester      User                @relation("ChangeRequester", fields: [requesterId], references: [id], onDelete: Restrict)
   approver       User?               @relation("ChangeApprover", fields: [approverId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model Notification {
@@ -1092,6 +1181,7 @@ model SavedFilter {
   updatedAt   DateTime  @updatedAt
   updatedBy   String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project?  @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
   owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 }
 
@@ -1111,9 +1201,11 @@ model Integration {
   createdBy         String
   updatedAt         DateTime            @updatedAt
   updatedBy         String
-  project           Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project           Project             @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
   connector         User                @relation("IntegrationConnector", fields: [connectedBy], references: [id], onDelete: Restrict)
   webhookDeliveries WebhookDelivery[]
+
+  @@unique([workspaceId, projectId, id])
 }
 
 model WebhookDelivery {
@@ -1127,10 +1219,11 @@ model WebhookDelivery {
   attempts       Int           @default(0)
   receivedAt     DateTime      @default(now())
   completedAt    DateTime?
-  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  integration    Integration   @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  project        Project       @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  integration    Integration   @relation(fields: [workspaceId, projectId, integrationId], references: [workspaceId, projectId, id], onDelete: Cascade)
 
   @@unique([integrationId, idempotencyKey])
+  @@unique([workspaceId, projectId, id])
 }
 
 model ClientPortalItem {
@@ -1146,9 +1239,10 @@ model ClientPortalItem {
   publishedAt      DateTime     @default(now())
   publishedBy      String
   sourceUpdatedAt  DateTime
-  project          Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project          Project      @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
   publisher        User         @relation("PortalPublisher", fields: [publishedBy], references: [id], onDelete: Restrict)
 
+  @@unique([workspaceId, projectId, id])
   @@index([projectId, status])
 }
 
@@ -1167,7 +1261,7 @@ model StorageObject {
   updatedAt   DateTime  @updatedAt
   archivedAt  DateTime?
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project     Project?  @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Restrict)
   uploader    User      @relation("FileUploader", fields: [uploaderId], references: [id], onDelete: Restrict)
 
   @@unique([bucket, key])

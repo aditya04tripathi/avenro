@@ -118,3 +118,11 @@ No backend Dockerfile or root `.github/` CI directory was found. No deployed env
 | `pnpm --filter @avenro/api lint`                                     | Passed                       | Not security or functional coverage                                  |
 
 E2E, live server boot, Prisma migration status, database integration, external providers, browser behavior, restore, and deployment were not run. Existing `test/app.e2e-spec.ts` creates the default Nest application and checks `/`; it does not exercise NodeAdapter plus `/api` from main. It also imports AppModule and therefore depends on database setup. Treat it as a starter test requiring replacement, not evidence of parity.
+
+## Task 02.2 current implementation
+
+- `prisma/schema.prisma` enforces one internal project per workspace, tenant-consistent composite relations, WorkspaceMember-backed project-role membership, relational workflow transitions and board columns, workflow-backed issue status, and revision fields.
+- `20261029120000_schema_integrity` is additive and leaves the existing init migration unchanged. Its aggregate-only preflight checks conflicts before DDL/data changes; it backfills missing internal projects and workspace-owner memberships, maps legacy issue states, and preserves legacy board column ids.
+- Prisma CLI scripts load `prisma7.config.ts`. Under `NODE_ENV=test`, only `TEST_DATABASE_URL` is selected; the shared test database helper restricts connections to named local `avenro_test*` databases.
+- Clean `template0` install and a self-created previous-schema fixture both migrated successfully. A schema integration test verifies a mixed-workspace/project StorageObject insert fails at the composite FK. See the 02.2 ledger for exact commands and scope limits.
+- The `.env` `DATABASE_URL` currently points to local `template1`, not `avenro`; no migration or query was made to either application database during task 02.2.

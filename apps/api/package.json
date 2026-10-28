@@ -23,8 +23,11 @@
     "test:built-smoke": "node test/built-smoke.mjs",
     "openapi:generate": "pnpm build && node test/openapi.mjs --generate",
     "test:contract": "pnpm build && node test/openapi.mjs --verify",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:generate": "prisma generate --config prisma7.config.ts",
+    "prisma:migrate": "prisma migrate dev --config prisma7.config.ts",
+    "prisma:migrate:deploy": "prisma migrate deploy --config prisma7.config.ts",
+    "prisma:migrate:status": "prisma migrate status --config prisma7.config.ts",
+    "test:schema": "vitest run --config ./vitest.config.schema.ts"
   },
   "dependencies": {
     "@nestjs/authentication": "^0.1.2",

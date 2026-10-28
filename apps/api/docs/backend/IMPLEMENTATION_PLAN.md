@@ -626,25 +626,31 @@ A task is VERIFIED only when its acceptance gate passes and results are recorded
 
 **Task:** 02.2 Repair schema integrity and migration workflow.
 
-**State:** BLOCKED before implementation. The required database identity and project/membership conflict preflight could not be tied to the intended Avenro database safely.
+**State:** VERIFIED for local schema and migration acceptance. The database named in `.env` is the Avenro local Compose PostgreSQL container on port 51214, but its URL points to `template1` instead of the normal `avenro` database. The test-only Prisma config selects `TEST_DATABASE_URL`; all deliberate validation below targeted named local `avenro_test*` databases. No migration or query was issued to `template1`, `avenro`, or external/production data.
 
-**Source:** Reinspected `prisma/schema.prisma`, the immutable existing migration `prisma/migrations/20261028144312_init_auth/migration.sql`, `prisma7.config.ts`, package scripts, test database guard, and the verified 00.1, 01.2 and 02.1 entries above. No application or migration files were changed.
+**Source:** `prisma/schema.prisma`, new `prisma/migrations/20261029120000_schema_integrity/migration.sql`, `prisma7.config.ts`, package migration scripts, `test/integration/schema-integrity.schema-spec.ts`, and `vitest.config.schema.ts`. The existing `20261028144312_init_auth` migration remains immutable.
 
-**Decisions:** The 00.1 compatibility choice remains one workspace to one internal project with active `WorkspaceMember` as the sole authorization source. No project or membership rows were inspected. The sanitized configured database identity is `localhost:51214/template1`; it is not an explicitly isolated `avenro_test*` database and does not match the previously inventoried local `avenro` database. Its credentials were not emitted. Do not run migrations or data-changing preflight against this target. `ProjectMembership` role/status mapping and any multi-project workspace conflicts remain unknown; do not infer mappings or remove legacy columns.
+**Decisions:** Preserve one internal Project per Workspace; retain ProjectMembership as non-authoritative role/accountability metadata and bind its user to WorkspaceMember. Add tenant-consistent composite keys/FKs, make WorkflowStatus the issue state source, preserve unmapped legacy board column ids, and add revision/active-owner/active-sprint constraints. Migration preflight emits aggregate counts only and stops on ambiguous multi-project, scope, membership, owner, sprint, workflow-transition, and duplicate-column conflicts. Missing workspace projects and owner memberships are backfilled additively.
 
-**Migration:** None. The existing `init_auth` migration was left immutable. No application-database connection, catalog inventory, schema/data query, reset, or deployment ran during 02.2 preflight. A local Compose PostgreSQL server identity query was used only to confirm the server process responds.
+**Migration:** `20261029120000_schema_integrity` applied successfully to (1) `avenro_test_022e0`, created explicitly from `template0` and using the repository's immutable init migration, and (2) `avenro_test_022b0`, created from `template0` with a self-created legacy fixture and baseline migration history. The legacy fixture preserved one BACKLOG issue and both board column ids (one mapped to BACKLOG, one retained as `legacyId`), retained its ProjectMembership, and backfilled the missing internal Project and owner membership. Project lead/owner mismatch was counted and preserved. Both databases report two migrations and up-to-date status. No rows from any existing Avenro application database were inspected.
+
+One additional local database, `avenro_test_022empty`, was created before the template was pinned to `template0`; Prisma applied the additive migration there. Its starting contents are not treated as an empty-fixture result. Do not inspect, reset, or drop that database; it is excluded from acceptance evidence. It remains a local test database and is not an application or production database.
 
 **Evidence:**
 
-- Re-read the verified 00.1 record: local Compose database `avenro` had zero user tables and no `_prisma_migrations`; the configured API target and any external/production Avenro database were explicitly unresolved.
-- `node --input-type=module -e "import 'dotenv/config'; ..."` from `apps/api` — exit 0; emitted only sanitized URL identity fields (`postgres:`, `localhost`, port `51214`, database `template1`, and a boolean indicating credentials are configured). No credential value was printed.
-- `docker exec avenro-postgres psql -U postgres -d postgres -Atc 'SELECT current_database()'` — exit 0 and returned `postgres`; this confirmed access to the local Compose server only, not the configured `template1` target's application identity or data mapping.
-- `docker compose ps --services --status running` — Avenro local PostgreSQL, Redis and SeaweedFS were running. No test database was created or used.
-- Inspected `test/support/test-database.ts`: it requires `NODE_ENV=test`, a distinct local `TEST_DATABASE_URL`, and database name `avenro_test` or `avenro_test_*`. No such target was established for this preflight.
+- `pnpm --filter @avenro/api format` — exit 0; unrelated auth-only formatter changes and generated ERD output were restored.
+- `pnpm --filter @avenro/api exec prisma validate --config prisma7.config.ts` — exit 0.
+- `pnpm --filter @avenro/api exec prisma generate --config prisma7.config.ts` — exit 0.
+- `NODE_ENV=test TEST_DATABASE_URL=postgres://postgres:postgres@localhost:51214/avenro_test_022e0 pnpm --filter @avenro/api prisma:migrate:status` — exit 0; database up to date.
+- The same status command with `avenro_test_022b0` — exit 0; database up to date.
+- `NODE_ENV=test TEST_DATABASE_URL=postgres://postgres:postgres@localhost:51214/avenro_test_022b0 pnpm --filter @avenro/api test:schema` — exit 0; mixed-tenant StorageObject insert rejected by the composite FK (PostgreSQL 23503).
+- `pnpm --filter @avenro/api test` — exit 0; 11 tests passed. `pnpm --filter @avenro/api test:e2e` — exit 0; 7 passed.
+- `pnpm --filter @avenro/api exec tsc --noEmit -p tsconfig.build.json`, `pnpm --filter @avenro/api lint`, and `pnpm --filter @avenro/api build` — exit 0.
+- `git diff --check` — exit 0.
 
-**Contract:** No schema, generated-client, package-script, migration, or integration-test contract changed.
+**Contract:** Test migrations fail closed without `NODE_ENV=test` and a distinct local `avenro_test*` URL. Package Prisma scripts name `prisma7.config.ts`. No route/API behavior changed. New workflow status and relational board models are schema-only foundations for later task-specific application commands.
 
-**Remaining:** Before implementation, identify the intended Avenro database through a safe sanitized path and establish a validated isolated `avenro_test*` URL for migration acceptance tests. For any existing Avenro data, collect only aggregate project-count, membership/status/role disagreement, workspace/project id, owner/lead, attribution, and tenant-link conflict counts without row contents; obtain product decisions for ambiguous mappings. Then implement and test the additive migration, empty-database and previous-schema fixture paths, DB-level tenant rejection, and generated-client compilation. Do not apply a migration to `template1` or any unidentified external/production target.
+**Remaining:** The migration's negative preflight branches and every individual cross-tenant relation are not each covered by automated tests; acceptance directly verified the clean install, legacy fixture, and a representative mixed-tenant FK. Existing application database conflicts/data preservation remain unknown and are a production release preflight, not part of this local acceptance. Do not run against `template1`, `avenro`, or any unidentified external/production database. Do not inspect, reset, or drop `avenro_test_022empty`.
 
 ## 9. Reference index
 
