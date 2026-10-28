@@ -14,8 +14,10 @@ import {
   NotFoundException,
   Param,
   Post,
+  Req,
   UnauthorizedException,
 } from '@nestjs/common';
+import type { NodeRequest } from '@nestjs/platform-node';
 import {
   ApiAcceptedResponse,
   ApiCookieAuth,
@@ -48,7 +50,8 @@ export class AuthController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({ operationId: 'auth_register' })
   @ApiAcceptedResponse({ type: RegistrationAcceptedDto })
-  register(@Body() input: RegisterDto) {
+  async register(@Body() input: RegisterDto, @Req() request: NodeRequest) {
+    await this.authService.assertRegistrationAllowed(clientAddress(request));
     return this.authService.register(
       input.email,
       input.password,
@@ -62,7 +65,11 @@ export class AuthController {
   @ApiOperation({ operationId: 'auth_signIn' })
   @ApiOkResponse({ type: AuthUserDto })
   @ApiUnauthorizedResponse()
-  async signIn(@Body() input: SignInDto) {
+  async signIn(@Body() input: SignInDto, @Req() request: NodeRequest) {
+    await this.authService.assertSignInAllowed(
+      clientAddress(request),
+      input.email,
+    );
     const user = await this.authService.signInWithPassword(
       input.email,
       input.password,
@@ -134,4 +141,9 @@ export class AuthController {
       throw new NotFoundException();
     }
   }
+}
+
+function clientAddress(request: NodeRequest): string {
+  const address = request.ip ?? request.socket.remoteAddress ?? 'unknown';
+  return address.startsWith('::ffff:') ? address.slice(7) : address;
 }

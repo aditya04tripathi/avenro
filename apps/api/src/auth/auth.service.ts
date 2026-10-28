@@ -1,6 +1,7 @@
 import { SessionService, SignInService } from '@nestjs/authentication';
 import { ConflictException, Injectable } from '@nestjs/common';
 
+import { AuthRateLimitService } from './auth-rate-limit.service.js';
 import { CredentialsService } from './credentials.service.js';
 
 @Injectable()
@@ -9,7 +10,16 @@ export class AuthService {
     private readonly credentials: CredentialsService,
     private readonly signIn: SignInService,
     private readonly sessions: SessionService,
+    private readonly rateLimit: AuthRateLimitService,
   ) {}
+
+  assertRegistrationAllowed(ipAddress: string) {
+    return this.rateLimit.assertRegistrationAllowed(ipAddress);
+  }
+
+  assertSignInAllowed(ipAddress: string, email: string) {
+    return this.rateLimit.assertSignInAllowed(ipAddress, email);
+  }
 
   async register(email: string, password: string, displayName?: string) {
     try {

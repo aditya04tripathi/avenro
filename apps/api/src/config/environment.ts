@@ -24,6 +24,7 @@ export function validateEnvironment(environment: RuntimeEnvironment) {
     environment.TRUSTED_ORIGINS?.split(',')
       .map((origin) => origin.trim())
       .filter(Boolean) ?? [];
+  const rateLimitKey = environment.AUTH_RATE_LIMIT_HMAC_KEY?.trim();
 
   if (!databaseUrl) {
     errors.push('DATABASE_URL is required');
@@ -79,6 +80,13 @@ export function validateEnvironment(environment: RuntimeEnvironment) {
     if (sameSite === 'none' && environment.COOKIE_SECURE !== 'true') {
       errors.push('COOKIE_SAME_SITE=none requires COOKIE_SECURE=true');
     }
+    if (!rateLimitKey || Buffer.byteLength(rateLimitKey, 'utf8') < 32) {
+      errors.push(
+        'Production requires AUTH_RATE_LIMIT_HMAC_KEY with at least 32 bytes',
+      );
+    }
+  } else if (rateLimitKey && Buffer.byteLength(rateLimitKey, 'utf8') < 32) {
+    errors.push('AUTH_RATE_LIMIT_HMAC_KEY must contain at least 32 bytes');
   }
 
   if (errors.length > 0) {

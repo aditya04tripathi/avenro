@@ -1283,6 +1283,16 @@ model Session {
   @@map("sessions")
 }
 
+model AuthenticationRateLimit {
+  keyHash      String   @id @db.Char(64)
+  windowStart  DateTime
+  attemptCount Int
+  expiresAt    DateTime
+
+  @@index([expiresAt])
+  @@map("authentication_rate_limits")
+}
+
 model RefreshToken {
   id              String    @id
   familyId        String

@@ -5,13 +5,16 @@ import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 
 import { AppModule } from '../src/app.module.js';
+import { AuthRateLimitStore } from '../src/auth/auth-rate-limit.store.js';
 import { configureApplication, createNodeAdapter } from '../src/bootstrap.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { createDisposableTestDatabase } from './support/test-database.js';
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
+const rateLimitKey = process.env.AUTH_RATE_LIMIT_HMAC_KEY;
+const skipPersistentAuth = !databaseUrl || !rateLimitKey;
 
-describe.skipIf(!databaseUrl)('persistent authentication routes', () => {
+describe.skipIf(skipPersistentAuth)('persistent authentication routes', () => {
   let app: NestNodeApplication;
   let database: ReturnType<typeof createDisposableTestDatabase>;
 
@@ -188,5 +191,45 @@ describe.skipIf(!databaseUrl)('persistent authentication routes', () => {
         password: 'a long password that is not exposed',
       })
       .expect(403);
+  });
+
+  it('fails closed when the distributed rate-limit store is unavailable', async () => {
+    const store = app.get(AuthRateLimitStore);
+    const consume = vi
+      .spyOn(store, 'consume')
+      .mockRejectedValue(new Error('rate-limit store unavailable'));
+
+    try {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/sign-in')
+        .send({
+          email: `outage-${randomUUID()}@example.com`,
+          password: 'incorrect password',
+        })
+        .expect(503);
+      expect(response.body).toMatchObject({
+        statusCode: 503,
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      });
+    } finally {
+      consume.mockRestore();
+    }
+  });
+
+  it('limits repeated sign-in attempts for the same account', async () => {
+    const email = `throttle-${randomUUID()}@example.com`;
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/sign-in')
+        .send({ email, password: 'incorrect password' })
+        .expect(401);
+    }
+
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/sign-in')
+      .send({ email, password: 'incorrect password' })
+      .expect(429);
   });
 });

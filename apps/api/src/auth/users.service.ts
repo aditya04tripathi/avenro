@@ -9,7 +9,7 @@ export interface User {
   emailVerified: boolean;
 }
 
-const normalizeEmail = (email: string): string =>
+export const normalizeEmail = (email: string): string =>
   email.trim().normalize('NFC').toLowerCase();
 
 @Injectable()

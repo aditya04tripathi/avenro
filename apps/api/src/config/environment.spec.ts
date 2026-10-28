@@ -39,8 +39,35 @@ describe('validateEnvironment', () => {
 
   it('requires secure cookie configuration in production', () => {
     expect(() =>
-      validateEnvironment({ ...validEnvironment, NODE_ENV: 'production' }),
-    ).toThrow(/Production requires COOKIE_SECURE=true/);
+      validateEnvironment({
+        ...validEnvironment,
+        NODE_ENV: 'production',
+        COOKIE_SECURE: 'true',
+        COOKIE_SAME_SITE: 'lax',
+      }),
+    ).toThrow(/AUTH_RATE_LIMIT_HMAC_KEY/);
+
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        NODE_ENV: 'production',
+        COOKIE_SECURE: 'true',
+        COOKIE_SAME_SITE: 'lax',
+        AUTH_RATE_LIMIT_HMAC_KEY: 'too-short',
+      }),
+    ).toThrow(/AUTH_RATE_LIMIT_HMAC_KEY/);
+  });
+
+  it('accepts production auth rate-limit and cookie secrets when configured', () => {
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        NODE_ENV: 'production',
+        COOKIE_SECURE: 'true',
+        COOKIE_SAME_SITE: 'lax',
+        AUTH_RATE_LIMIT_HMAC_KEY: 'a'.repeat(32),
+      }),
+    ).not.toThrow();
   });
 });
 
