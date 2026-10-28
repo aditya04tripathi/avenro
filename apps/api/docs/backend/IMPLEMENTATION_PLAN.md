@@ -615,7 +615,8 @@ A task is VERIFIED only when its acceptance gate passes and results are recorded
 - `pnpm --filter @avenro/api lint` — exit 0.
 - `pnpm --filter @avenro/api build` — exit 0 as part of both OpenAPI scripts; built output exercised the configured Swagger CLI transformer.
 - `pnpm --filter @avenro/api test:built-smoke` — exit 0; emitted AppModule started, served `/api/v1`, and shut down on NodeAdapter.
-- `git diff --check` — exit 0. Scoped atomic commit script was executed with named files only; final commit and clean status are recorded after commit below.
+- `git diff --check` — exit 0.
+- `/tmp/avenro-02-1-source-commits.sh` — exit 0; created `1a167f8` for the implementation and `54c7220` for the backend map/progress updates, using named paths only. `git status --short --branch` was clean afterward; `git log -3 --oneline` showed both task commits above prerequisite commit `9d5d9d8`.
 
 **Contract:** Runtime docs and build export call `createOpenApiDocument`. `ErrorFieldDto` metadata is inferred by the Nest CLI plugin and verified in the emitted contract; health/error schemas and actual response statuses are checked. The implementation adds no hand-written OpenAPI YAML and no hypothetical product routes.
 
