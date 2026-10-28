@@ -28,12 +28,12 @@ UsersService and CredentialsService exist outside this connected provider graph.
 
 ### Current HTTP interface
 
-| Method | Path under main bootstrap | Input | Output                                    | Security                                   |
-| ------ | ------------------------- | ----- | ----------------------------------------- | ------------------------------------------ |
-| GET    | `/api/v1`                 | None  | Plain text `Hello World!`                 | Public; CORS/origin policy applies         |
-| GET    | `/health`                 | None  | Terminus aggregate health or health error | Public; depends on APP_ORIGIN and database |
+| Method | Path under main bootstrap | Input | Output                                              | Security                                   |
+| ------ | ------------------------- | ----- | --------------------------------------------------- | ------------------------------------------ |
+| GET    | `/api/v1`                 | None  | Plain text `Hello World!`                           | Public; CORS/origin policy applies         |
+| GET    | `/health`                 | None  | `HealthResponseDto`; safe `ErrorResponseDto` on 503 | Public; depends on APP_ORIGIN and database |
 
-The shared bootstrap applies to the production entry point and E2E harness. `GET /api` has no compatibility alias. Shared HTTP DTO primitives and validation/error handling exist, but no product route DTOs, permission policies, worker entry points, realtime handlers, or OpenAPI endpoints exist. Contract and dependency-metadata behavior is covered by E2E fixture controllers, not product routes.
+The shared bootstrap applies to the production entry point and E2E harness. `GET /api` has no compatibility alias. OpenAPI UI and JSON are both available at `/docs` and `/docs-json` only when `OPENAPI_ENABLED=true` in `development` or `test`; they are disabled in production and all other environments. The build export uses the same document factory. No authentication/session endpoints, workspace product DTO routes, permission policies, worker entry points, or realtime handlers exist. Contract metadata is verified from Nest CLI built output, not assumed from Vitest transforms.
 
 ## Proposed module design
 

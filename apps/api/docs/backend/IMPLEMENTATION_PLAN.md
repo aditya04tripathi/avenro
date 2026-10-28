@@ -591,6 +591,36 @@ A task is VERIFIED only when its acceptance gate passes and results are recorded
 
 **Remaining:** E2E contract controllers are test fixtures, not product routes. The disposable database helper's URL guard and disconnect cleanup were tested without opening a database connection; PostgreSQL connectivity and schema behavior remain unverified. Real production startup, DB target, provider integrations, and deployment were not exercised. No secrets were read, no data was reset, and no deployment occurred.
 
+### 02.1 Install the DTO/OpenAPI pipeline — 29 October 2026
+
+**Task:** 02.1 Install the DTO/OpenAPI pipeline.
+
+**State:** VERIFIED. The built OpenAPI schema validates, the Nest CLI DTO transformer metadata is present in emitted output, the NodeAdapter serves UI assets and the matching JSON contract, and disabled/production policy hides both routes.
+
+**Source:** `nest-cli.json`, `package.json`, `pnpm-lock.yaml`, `src/openapi/openapi.ts`, `src/bootstrap.ts`, actual hello/health endpoint metadata, health/error response DTOs, and `test/openapi.mjs`. Auth DTOs and session security are intentionally absent because the controller has no auth handlers and no session flow is registered.
+
+**Decisions:** `@nestjs/swagger` 12.0.5 satisfies the installed Nest 12 and TypeScript 6 peer ranges. One factory generates both runtime documents and the build export. `OPENAPI_ENABLED=true` opts in only for `NODE_ENV=development` or `test`; UI and JSON are registered together and disabled in production and other environments. The configured request-origin policy still applies. Terminus's implicit Swagger responses are disabled for this handler because the package emits legacy top-level schemas that fail OpenAPI validation and disagree with the shared safe 503 error filter; its no-cache behavior remains enabled. The real health response and the initial unauthenticated hello route are documented; no nonexistent auth endpoint or cookie scheme is claimed.
+
+**Migration:** None. The generated `apps/api/artifacts/openapi.json` is an ignored derived artefact. No database connection, schema operation, reset, migration, secret access, or deployment ran.
+
+**Evidence:**
+
+- Clean pre-task worktree and committed prerequisite: `git status --short --branch` showed clean `master`; `git log -5 --oneline` showed `9d5d9d8 docs: record shared HTTP contract verification` on top of the 01.2 commits `68849f9` and `23c2678`.
+- `pnpm --filter @avenro/api format` — exit 0. The package formatter also reordered imports in four unrelated auth files; those formatter-only changes were restored. `prettier --write` was run with the API config for `test/openapi.mjs`, Nest CLI config, package manifest, and backend progress documents.
+- `pnpm --filter @avenro/api openapi:generate` — exit 0; built output produced and Swagger Parser validated `artifacts/openapi.json` from the shared factory without listening on a public port.
+- `pnpm --filter @avenro/api test:contract` — exit 0; Swagger Parser validated the built document, stable unique operationIds and actual route set were asserted, emitted plugin metadata produced concrete DTO properties, NodeAdapter served `/docs`, `/docs/swagger-ui-init.js`, and `/docs-json`, and both UI and JSON returned 404 when disabled or in production. Prisma was overridden in this contract harness; no PostgreSQL connection was made.
+- `pnpm --filter @avenro/api test` — exit 0; 11 tests passed across 4 files.
+- `pnpm --filter @avenro/api test:e2e` — exit 0; 7 tests passed on NodeAdapter.
+- `pnpm --filter @avenro/api exec tsc --noEmit -p tsconfig.build.json` — exit 0.
+- `pnpm --filter @avenro/api lint` — exit 0.
+- `pnpm --filter @avenro/api build` — exit 0 as part of both OpenAPI scripts; built output exercised the configured Swagger CLI transformer.
+- `pnpm --filter @avenro/api test:built-smoke` — exit 0; emitted AppModule started, served `/api/v1`, and shut down on NodeAdapter.
+- `git diff --check` — exit 0. Scoped atomic commit script was executed with named files only; final commit and clean status are recorded after commit below.
+
+**Contract:** Runtime docs and build export call `createOpenApiDocument`. `ErrorFieldDto` metadata is inferred by the Nest CLI plugin and verified in the emitted contract; health/error schemas and actual response statuses are checked. The implementation adds no hand-written OpenAPI YAML and no hypothetical product routes.
+
+**Remaining:** Documentation is opt-in only in development/test and intentionally has no authentication gate; production and staging-like environments cannot register it. No auth/session endpoint exists to document. Database health dependencies, production database connectivity, deployment and external provider behavior remain unverified and outside this task.
+
 ## 9. Reference index
 
 Use the `nestjs-docs` skill and its task-relevant chapters, discovered through the available skill catalog. The local corpus spans Nest 11–12 and may include features newer than an installed package. Installed declarations, package peers and runtime tests decide whether an example is usable. Read codebase-design for module/interface/seam discipline and antislop-code for comment hygiene.

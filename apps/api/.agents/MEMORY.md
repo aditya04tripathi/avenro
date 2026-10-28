@@ -20,7 +20,7 @@ Plan phase 19 adds Avenro MCP after core staging gates: protocol/OAuth transport
 
 The package is `@avenro/api`. Nest core/common installed 12.3.1; NodeAdapter 12.3.2; authentication library 0.1.2; Prisma 7.10.1. ESM/NodeNext and `.js` import suffixes. Since task 01.1, main serves `/api/v1` on PORT or 3001 using NodeAdapter, not the default Express adapter; health is served at `/health`.
 
-AppModule imports global config, Prisma, health and skeletal auth. Only GET `/api` (Hello World) and GET `/api/health` have product handlers. Health pings BASE_URL/api and Prisma. AuthController has no endpoints; AuthService is empty. UsersService/CredentialsService contain real helper code but are not registered in AuthModule. Task 01.2 added shared HTTP DTO primitives, validation, safe error mapping, request IDs and structured redacted logging; there are still no product DTO routes, Swagger dependency or OpenAPI pipeline. Schema and one large migration are persistence assets, not implemented feature endpoints.
+AppModule imports global config, Prisma, health and skeletal auth. Only GET `/api/v1` (Hello World) and GET `/health` have product handlers. Health pings APP_ORIGIN and Prisma. AuthController has no endpoints; AuthService is empty. UsersService/CredentialsService contain helper code but are not registered in AuthModule. Task 01.2 added shared HTTP DTO primitives, validation, safe error mapping, request IDs and structured redacted logging. Task 02.1 added a Nest CLI Swagger transformer, one shared document factory, and built-output/runtime contract checks; UI and JSON are both gated to explicit development/test configuration. There are no auth handlers or session security scheme to advertise. Schema and one large migration are persistence assets, not implemented feature endpoints.
 
 Baseline unit/build/type/lint checks passed before task 01.1. Task 01.1 and task 01.2 add NodeAdapter E2E and built-runtime checks; the task 01.2 disposable database guard is unit-tested, but no PostgreSQL connection or provider/runtime deployment was verified. Build success does not prove production database availability or contract generation.
 
@@ -37,6 +37,13 @@ Baseline unit/build/type/lint checks passed before task 01.1. Task 01.1 and task
 - `test/app.e2e-spec.ts` uses the NodeAdapter and shared bootstrap configuration. DTO validation and constructor injection prove decorator metadata in the test compilation path.
 - `test/support/test-database.ts` requires `NODE_ENV=test`, a distinct local `TEST_DATABASE_URL`, and a database named `avenro_test` or `avenro_test_*`. It binds Prisma to that URL and cleanup only disconnects; it does not drop schemas or reset data.
 - Task 01.2 verification evidence and the fact that no PostgreSQL connection was made are recorded in `docs/backend/IMPLEMENTATION_PLAN.md`.
+
+## Task 02.1 current implementation
+
+- `src/openapi/openapi.ts` owns the shared OpenAPI document factory and the paired runtime UI/JSON exposure gate. Only `development` and `test` may opt in with `OPENAPI_ENABLED=true`.
+- Nest CLI plugin metadata is verified from `dist` by `test/openapi.mjs`; Vitest is not assumed to run the transformer. `openapi:generate` writes ignored `artifacts/openapi.json`; `test:contract` validates the schema and runs the docs through NodeAdapter.
+- Only actual GET `/api/v1` and GET `/health` endpoints appear. Health 200 uses a concrete DTO, and its 503 documents the global safe error envelope. Auth remains without public routes or security metadata.
+- Task 02.1 evidence, checks and limits are recorded in `docs/backend/IMPLEMENTATION_PLAN.md`. Export and smoke harnesses override Prisma and make no database connection.
 
 ## Constraints and unresolved decisions
 
