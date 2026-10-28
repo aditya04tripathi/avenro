@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+!.env.example
+**/dist/
+**/artifacts/
+**/coverage/
+**/test-results/
+**/src/generated/prisma/
+**/exports/
+**/.exports/
+*.log
