@@ -1,0 +1,21 @@
+{
+  "name": "avenro",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:dev": "pnpm -r run start:dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "format": "pnpm -r run format"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.0",
+  "devDependencies": {
+    "@avenro/eslint-config": "workspace:*",
+    "@avenro/prettier-config": "workspace:*",
+    "@avenro/typescript-config": "workspace:*"
+  }
+}

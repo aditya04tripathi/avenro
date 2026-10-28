@@ -1,0 +1,24 @@
+{
+  "name": "@avenro/eslint-config",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "base.js",
+  "exports": {
+    "./base": "./base.js",
+    "./next": "./next.js"
+  },
+  "files": [
+    "base.js",
+    "next.js"
+  ],
+  "peerDependencies": {
+    "eslint": "^9",
+    "eslint-config-next": ">=15"
+  },
+  "peerDependenciesMeta": {
+    "eslint-config-next": {
+      "optional": true
+    }
+  }
+}
