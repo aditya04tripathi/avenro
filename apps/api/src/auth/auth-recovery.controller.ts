@@ -20,7 +20,13 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { NodeRequest } from '@nestjs/platform-node';
-import { ApiAcceptedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiAcceptedResponse,
+  ApiCookieAuth,
+  ApiFoundResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { AuthService } from './auth.service.js';
 import {
@@ -54,6 +60,7 @@ export class AuthRecoveryController {
 
   @Post('email/verification')
   @HttpCode(HttpStatus.ACCEPTED)
+  @ApiCookieAuth('sessionCookie')
   @ApiAcceptedResponse()
   @ApiOperation({ operationId: 'auth_resendVerification' })
   async resendVerification(
@@ -100,6 +107,12 @@ export class AuthRecoveryController {
   @Public()
   @Get('oidc/:provider/login')
   @Redirect()
+  @ApiFoundResponse({
+    description: 'Redirects to the identity provider.',
+    headers: {
+      Location: { schema: { type: 'string', format: 'uri' } },
+    },
+  })
   @ApiOperation({ operationId: 'auth_startOidc' })
   startOidc(
     @Param('provider') provider: string,
@@ -112,6 +125,12 @@ export class AuthRecoveryController {
   @Public()
   @Get('oidc/:provider/callback')
   @Redirect()
+  @ApiFoundResponse({
+    description: 'Redirects to the application.',
+    headers: {
+      Location: { schema: { type: 'string', format: 'uri' } },
+    },
+  })
   @ApiOperation({ operationId: 'auth_finishOidc' })
   finishOidc(
     @Param('provider') provider: string,

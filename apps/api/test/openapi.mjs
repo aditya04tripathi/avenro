@@ -104,7 +104,53 @@ assert.deepEqual(operationIds.sort(), [
   'auth_verifyEmail',
   'health_check',
 ]);
+const responseStatuses = Object.fromEntries(
+  Object.entries(document.paths).map(([path, pathItem]) => [
+    path,
+    Object.fromEntries(
+      Object.entries(pathItem).map(([method, operation]) => [
+        method,
+        Object.keys(operation.responses).sort(),
+      ]),
+    ),
+  ]),
+);
+assert.deepEqual(responseStatuses, {
+  '/api/v1': { get: ['200'] },
+  '/api/v1/auth/email/verification': { post: ['202'] },
+  '/api/v1/auth/email/verify': { post: ['200'] },
+  '/api/v1/auth/me': { get: ['200'] },
+  '/api/v1/auth/oidc/{provider}/callback': { get: ['302'] },
+  '/api/v1/auth/oidc/{provider}/login': { get: ['302'] },
+  '/api/v1/auth/password/forgot': { post: ['202'] },
+  '/api/v1/auth/password/reset': { post: ['200'] },
+  '/api/v1/auth/register': { post: ['202'] },
+  '/api/v1/auth/sessions': { get: ['200'] },
+  '/api/v1/auth/sessions/{id}': { delete: ['204', '404'] },
+  '/api/v1/auth/sign-in': { post: ['200', '401'] },
+  '/api/v1/auth/sign-out': { post: ['204'] },
+  '/health': { get: ['200', '503'] },
+});
+for (const path of [
+  '/api/v1/auth/oidc/{provider}/login',
+  '/api/v1/auth/oidc/{provider}/callback',
+]) {
+  assert.equal(
+    document.paths[path].get.responses['302'].headers.Location.schema.format,
+    'uri',
+  );
+}
 assert.deepEqual(document.paths['/api/v1/auth/me'].get.security, [
+  { sessionCookie: [] },
+]);
+assert.deepEqual(
+  document.paths['/api/v1/auth/email/verification'].post.security,
+  [{ sessionCookie: [] }],
+);
+assert.deepEqual(document.paths['/api/v1/auth/sessions'].get.security, [
+  { sessionCookie: [] },
+]);
+assert.deepEqual(document.paths['/api/v1/auth/sessions/{id}'].delete.security, [
   { sessionCookie: [] },
 ]);
 assert.equal(document.paths['/api/v1/auth/register'].post.security, undefined);
@@ -112,6 +158,11 @@ assert.equal(
   document.components.securitySchemes.sessionCookie.name,
   '__Host-sid',
 );
+const registerSchema = document.components.schemas.RegisterDto;
+assert.deepEqual([...registerSchema.required].sort(), ['email', 'password']);
+assert.equal(registerSchema.properties.email.maxLength, 254);
+assert.equal(registerSchema.properties.password.minLength, 12);
+assert.equal(registerSchema.properties.password.maxLength, 1024);
 
 const errorFieldSchema = document.components?.schemas?.ErrorFieldDto;
 assert.deepEqual(Object.keys(errorFieldSchema.properties).sort(), [
@@ -170,6 +221,20 @@ if (mode === '--generate') {
     const address = documentApp.getHttpServer().address();
     assert.ok(address && typeof address !== 'string');
     const baseUrl = `http://127.0.0.1:${address.port}`;
+    const invalidRegistration = await fetch(`${baseUrl}/api/v1/auth/register`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: 'contract@example.com',
+        password: 'x'.repeat(1025),
+      }),
+    });
+    assert.equal(invalidRegistration.status, 400);
+    assert.ok(
+      (await invalidRegistration.json()).fieldErrors.some(
+        (fieldError) => fieldError.path === 'password',
+      ),
+    );
     const uiResponse = await fetch(`${baseUrl}/api/v1/docs`);
     assert.equal(uiResponse.status, 200);
     assert.equal(uiResponse.url, `${baseUrl}/api/v1/docs/`);
