@@ -108,7 +108,10 @@ assert.deepEqual(document.paths['/api/v1/auth/me'].get.security, [
   { sessionCookie: [] },
 ]);
 assert.equal(document.paths['/api/v1/auth/register'].post.security, undefined);
-assert.equal(document.components.securitySchemes.sessionCookie.name, '__Host-sid');
+assert.equal(
+  document.components.securitySchemes.sessionCookie.name,
+  '__Host-sid',
+);
 
 const errorFieldSchema = document.components?.schemas?.ErrorFieldDto;
 assert.deepEqual(Object.keys(errorFieldSchema.properties).sort(), [
@@ -167,12 +170,34 @@ if (mode === '--generate') {
     const address = documentApp.getHttpServer().address();
     assert.ok(address && typeof address !== 'string');
     const baseUrl = `http://127.0.0.1:${address.port}`;
-    const uiResponse = await fetch(`${baseUrl}/docs`);
+    const uiResponse = await fetch(`${baseUrl}/api/v1/docs`);
     assert.equal(uiResponse.status, 200);
-    assert.match(await uiResponse.text(), /Swagger UI/);
-    const assetResponse = await fetch(`${baseUrl}/docs/swagger-ui-init.js`);
+    assert.equal(uiResponse.url, `${baseUrl}/api/v1/docs/`);
+    assert.equal(
+      uiResponse.headers
+        .get('content-security-policy')
+        .includes('upgrade-insecure-requests'),
+      false,
+    );
+    assert.equal(uiResponse.headers.has('strict-transport-security'), false);
+    const uiHtml = await uiResponse.text();
+    assert.match(uiHtml, /Swagger UI/);
+    const assets = [
+      ...uiHtml.matchAll(/(?:href|src)="([^"]*swagger-ui[^"]*)"/g),
+    ].map((match) => match[1]);
+    assert.ok(assets.length >= 4);
+    for (const asset of assets) {
+      assert.equal(
+        (await fetch(new URL(asset, uiResponse.url))).status,
+        200,
+        `Swagger UI asset did not load: ${asset}`,
+      );
+    }
+    const assetResponse = await fetch(
+      `${baseUrl}/api/v1/docs/swagger-ui-init.js`,
+    );
     assert.equal(assetResponse.status, 200);
-    const jsonResponse = await fetch(`${baseUrl}/docs-json`);
+    const jsonResponse = await fetch(`${baseUrl}/api/v1/docs-json`);
     assert.equal(jsonResponse.status, 200);
     assert.deepEqual(await jsonResponse.json(), document);
   } finally {
@@ -189,8 +214,8 @@ if (mode === '--generate') {
       const address = gatedApp.getHttpServer().address();
       assert.ok(address && typeof address !== 'string');
       const baseUrl = `http://127.0.0.1:${address.port}`;
-      assert.equal((await fetch(`${baseUrl}/docs`)).status, 404);
-      assert.equal((await fetch(`${baseUrl}/docs-json`)).status, 404);
+      assert.equal((await fetch(`${baseUrl}/api/v1/docs`)).status, 404);
+      assert.equal((await fetch(`${baseUrl}/api/v1/docs-json`)).status, 404);
     } finally {
       await gatedApp.close();
     }

@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import type { NodeRequest, NodeResponse } from '@nestjs/platform-node';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { OpenAPIObject } from '@nestjs/swagger';
 
@@ -36,10 +37,26 @@ export function configureOpenApi(
     return false;
   }
 
+  app.use((request: NodeRequest, response: NodeResponse, next: () => void) => {
+    const requestUrl = new URL(request.url ?? '/', 'http://localhost');
+    if (request.method !== 'GET' || requestUrl.pathname !== '/api/v1/docs') {
+      next();
+      return;
+    }
+
+    response.statusCode = 308;
+    response.setHeader(
+      'Location',
+      `${requestUrl.pathname}/${requestUrl.search}`,
+    );
+    response.end();
+  });
+
   SwaggerModule.setup('docs', app, () => createOpenApiDocument(app), {
     jsonDocumentUrl: 'docs-json',
     raw: ['json'],
     ui: true,
+    useGlobalPrefix: true,
   });
   return true;
 }

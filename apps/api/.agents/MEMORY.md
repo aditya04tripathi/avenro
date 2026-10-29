@@ -41,6 +41,7 @@ Baseline unit/build/type/lint checks passed before task 01.1. Task 01.1 and task
 ## Task 02.1 current implementation
 
 - `src/openapi/openapi.ts` owns the shared OpenAPI document factory and the paired runtime UI/JSON exposure gate. Only `development` and `test` may opt in with `OPENAPI_ENABLED=true`.
+- Swagger UI and JSON are mounted under the global prefix at `/api/v1/docs` and `/api/v1/docs-json`; the UI path redirects to its trailing-slash form so relative assets resolve. Local development/test CSP omits `upgrade-insecure-requests` and HSTS is disabled so HTTP Swagger assets are not upgraded to HTTPS. Production-like environments retain those secure defaults.
 - Nest CLI plugin metadata is verified from `dist` by `test/openapi.mjs`; Vitest is not assumed to run the transformer. `openapi:generate` writes ignored `artifacts/openapi.json`; `test:contract` validates the schema and runs the docs through NodeAdapter.
 - Only actual GET `/api/v1` and GET `/health` endpoints appear. Health 200 uses a concrete DTO, and its 503 documents the global safe error envelope. Auth remains without public routes or security metadata.
 - Task 02.1 evidence, checks and limits are recorded in `docs/backend/IMPLEMENTATION_PLAN.md`. Export and smoke harnesses override Prisma and make no database connection.

@@ -622,6 +622,12 @@ A task is VERIFIED only when its acceptance gate passes and results are recorded
 
 **Remaining:** Documentation is opt-in only in development/test and intentionally has no authentication gate; production and staging-like environments cannot register it. No auth/session endpoint exists to document. Database health dependencies, production database connectivity, deployment and external provider behavior remain unverified and outside this task.
 
+**Swagger route/scheme correction — 29 October 2026:** Mounted Swagger UI and JSON under the configured API prefix at `/api/v1/docs` and `/api/v1/docs-json`. The previous unversioned `/docs` routes remain unavailable. Local development/test responses now omit the CSP `upgrade-insecure-requests` directive and HSTS; production-like environments retain both defaults. This prevents HTTP Swagger resources from being rewritten to HTTPS when the local NodeAdapter is only serving HTTP.
+
+- `pnpm --filter @avenro/api format` — exit 0.
+- `pnpm --filter @avenro/api test:contract` — exit 0; the built contract verified `/api/v1/docs`, the slash redirect, all Swagger UI assets, `/api/v1/docs-json`, opt-in gating, and absence of local HTTP-upgrade/HSTS headers.
+- Live NodeAdapter checks on port 3001 returned 200 for `/api/v1/docs`, `/api/v1/docs/`, `/api/v1/docs/swagger-ui.css`, and `/api/v1/docs-json`; responses omitted `upgrade-insecure-requests` and `Strict-Transport-Security`.
+
 ### 02.2 Repair schema integrity and migration workflow — 29 October 2026
 
 **Task:** 02.2 Repair schema integrity and migration workflow.

@@ -96,7 +96,17 @@ export function configureApplication(
     limit: '1mb',
     parameterLimit: 100,
   });
-  app.useSecurityHeaders();
+  const localEnvironment =
+    environment.NODE_ENV === 'development' || environment.NODE_ENV === 'test';
+
+  app.useSecurityHeaders({
+    contentSecurityPolicy: {
+      directives: {
+        'upgrade-insecure-requests': localEnvironment ? false : true,
+      },
+    },
+    strictTransportSecurity: !localEnvironment,
+  });
   app.use((request: NodeRequest, response: NodeResponse, next: () => void) => {
     const origin = request.headers.origin;
     if (
