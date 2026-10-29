@@ -25,7 +25,7 @@ When a new model takes over, it must read the recorded progress before changing 
 
 ### Decisions that need recording before schema work
 
-The historical product direction was one workspace equals one project and one access scope. Current schema and README still expose separate Workspace/Project concepts. The target public interface in this plan uses workspace scope only. Recommended compatibility implementation: retain an internal Project record temporarily, create it atomically with the workspace, enforce a one-to-one relation after validating existing data, and resolve it server-side. Workspace membership becomes the sole authorization source; ProjectRole can carry Scrum accountability metadata only. A future consolidation can remove the internal Project if it lowers complexity. Do not publish two independent access scopes.
+The historical product direction was one workspace equals one project and one access scope. Current schema and README still expose separate Workspace/Project concepts. The target public interface in this plan uses workspace scope only. Recommended compatibility implementation: retain an internal Project record temporarily, create it atomically with the workspace, enforce a one-to-one relation after validating existing data, and resolve it server-side. Workspace membership is the intended sole authorization source; ProjectRole can carry Scrum accountability metadata only. This remains product direction, not implemented behavior. A future consolidation can remove the internal Project if it lowers complexity. Do not publish two independent access scopes. The role names and broad permission matrix below are proposals pending task-specific validation. In particular, legacy CLIENT behavior and any guest/client classification require an explicit product decision before implementation; do not infer workspace permissions from ProjectRole.
 
 If existing data contains multiple projects per workspace, do not merge or discard it automatically. Produce a count/conflict report without private content, propose a migration, and obtain a product decision before that migration. The implementation can continue on unrelated foundation tasks. Do not silently replace the earlier product direction with the current schema.
 
@@ -228,7 +228,7 @@ Gate: replay/expired/wrong-purpose tokens fail; email change invalidates old ver
 
 ### 04.1 Workspace authorization, membership and invitations
 
-Prerequisite: 03.1, 02.2, and the mail adapter/token delivery portion of 03.2. Google setup does not block workspace implementation. Files: `authorization/*`, `workspaces/*`, `jobs/*`, DTOs, schema/migration as needed.
+Prerequisite: 03.1, 02.2, and the mail adapter/token delivery portion of 03.2. Google setup does not block workspace implementation. Task 03.2's local adapter behavior is verified, but real Resend delivery and Google sandbox acceptance remain blocked; invitation delivery cannot be claimed accepted until a configured mail sandbox verifies it. Workspace authorization, membership, and invitation flows remain unimplemented regardless of this prerequisite. Files: `authorization/*`, `workspaces/*`, `jobs/*`, DTOs, schema/migration as needed.
 
 1. Implement global authentication plus shared workspace policy. Resolve actor from credentials and active membership on each command; body ids never select actor.
 2. Create workspace, owner membership, internal project/default workflow and audit in one transaction. Add list/read/update/archive/restore endpoints.
@@ -236,7 +236,7 @@ Prerequisite: 03.1, 02.2, and the mail adapter/token delivery portion of 03.2. G
 4. Add membership role/suspend/remove commands and atomic ownership transfer. Lock the owner record; no last-owner removal or self-escalation. Revocation affects in-flight follow-up commands according to transaction policy.
 5. Implement the permission matrix and invisible-resource 404 policy consistently for direct ids, lists and nested links.
 
-Gate: every role/action combination, concurrent owner change, double invite acceptance, suspension and cross-workspace reads/writes are tested with real database fixtures. No child feature starts before this gate.
+Gate: every accepted role/action combination, concurrent owner change, double invite acceptance, suspension and cross-workspace reads/writes are tested with real database fixtures; invitation delivery/retry is verified against a configured mail sandbox. Resolve the pending CLIENT/guest policy before implementing its behavior. No child feature starts before this gate.
 
 ### 05.1 Issues, backlog, comments and dependency links
 
@@ -732,3 +732,15 @@ Use the `nestjs-docs` skill and its task-relevant chapters, discovered through t
 | Production testing/health | `fundamentals/testing.txt`, `reliability/terminus.txt`                                                     |
 
 The design choices and acceptance thresholds in this document are Avenro proposals. They are not promises or endorsements made by the referenced framework documentation.
+
+### Product-scope audit — 29 October 2026
+
+**Scope:** Read-only comparison of product scope, decisions, release gates and phase 04.1 prerequisites against committed implementation and progress evidence for 00.1–03.2. No feature phase, database, provider, or runtime behavior was changed or verified by this audit.
+
+**Evidence inspected:** Root and API `AGENTS.md`; `apps/api/.agents/MEMORY.md`; `CURRENT_STATE.md`; `API_MAP.md`; this plan's product decisions, release gates, planning assumptions, phase 04.1, and progress records 00.1–03.2; committed history through `dca4047`. NestJS skill chapters on authentication and authorization informed review of the auth/permission boundary. The 03.2 record confirms local implementation/database gates but explicitly blocks external provider acceptance because Resend and Google sandbox configuration was absent. The 02.2 and 03.x records limit DB evidence to named local test fixtures and explicitly exclude production DB/deployment claims.
+
+**Findings and corrections:** The earlier one-workspace/one-project direction and workspace-only public scope are preserved as intended product direction; internal `Project` and `ProjectMembership` remain compatibility data, not verified authorization behavior. Role labels and the permission matrix are planning proposals, not accepted/implemented policy; legacy `CLIENT`/guest semantics remain an open product decision. Phase 04.1 may proceed without Google sandbox setup, but its invitation delivery acceptance requires an actual configured mail sandbox; 03.2's stubbed mail response does not satisfy that gate. Provider selection for calls remains open, and recording/transcription/import remain out of the settled scope.
+
+**Release/readiness conclusion:** Completed 00.1–03.1 are recorded as verified within their stated local evidence. Task 03.2 remains locally verified with provider acceptance blocked. Workspace product routes and authorization are still unimplemented. Foundation release scope includes phases 00–04, so no Foundation release or workspace authorization acceptance is implied; the plan's all-included-feature gates and 17.1/18.1 evidence remain required for release readiness. No unimplemented phase is marked verified by this audit.
+
+**Remaining:** Resolve CLIENT/guest policy before implementing that classification; configure and verify Resend delivery for invitation acceptance; preserve the existing production database, provider, and deployment restrictions. No DB target was inspected, no provider was contacted, and no deployment was attempted.
