@@ -3,6 +3,7 @@ import { DM_Sans, Geist_Mono, Public_Sans } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
+import Footer from "@/components/marketing/footer"
 import "./globals.css"
 
 const dmSansHeading = DM_Sans({
@@ -35,7 +36,10 @@ export default function RootLayout({
       )}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   )

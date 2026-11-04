@@ -12,6 +12,17 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  images: {
+    remotePatterns: [
+      {
+        hostname: "avatars.githubusercontent.com",
+      },
+      {
+        hostname: "images.unsplash.com",
+      },
+    ],
+    formats: ["image/webp"],
+  },
 }
 
 export default nextConfig
