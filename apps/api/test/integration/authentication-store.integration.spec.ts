@@ -1,7 +1,6 @@
 import {
   AuthenticationStorage,
   type EmailTokenRecord,
-  type OidcTransaction,
   type SessionRecord,
 } from '@nestjs/authentication';
 import { authenticationStoreContract } from '@nestjs/authentication/testing';
@@ -134,25 +133,5 @@ describe.skipIf(!databaseUrl)('PostgreSQL authentication token stores', () => {
     ]);
     expect(consumed.filter(Boolean)).toHaveLength(1);
     expect(consumed.find(Boolean)).toMatchObject(token);
-  });
-
-  it('consumes a persisted OIDC transaction exactly once', async () => {
-    const transaction: OidcTransaction = {
-      state: randomUUID(),
-      provider: 'google',
-      nonce: randomUUID(),
-      codeVerifier: randomUUID(),
-      redirectTo: '/settings',
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 60_000),
-    };
-    await tokenStore.saveOidcState(transaction);
-
-    const consumed = await Promise.all([
-      tokenStore.consumeOidcState(transaction.state),
-      tokenStore.consumeOidcState(transaction.state),
-    ]);
-    expect(consumed.filter(Boolean)).toHaveLength(1);
-    expect(consumed.find(Boolean)).toEqual(transaction);
   });
 });

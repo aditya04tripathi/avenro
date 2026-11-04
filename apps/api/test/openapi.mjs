@@ -77,8 +77,6 @@ assert.deepEqual(Object.keys(document.paths).sort(), [
   '/api/v1/auth/email/verification',
   '/api/v1/auth/email/verify',
   '/api/v1/auth/me',
-  '/api/v1/auth/oidc/{provider}/callback',
-  '/api/v1/auth/oidc/{provider}/login',
   '/api/v1/auth/password/forgot',
   '/api/v1/auth/password/reset',
   '/api/v1/auth/register',
@@ -90,7 +88,6 @@ assert.deepEqual(Object.keys(document.paths).sort(), [
 ]);
 assert.deepEqual(operationIds.sort(), [
   'application_getHello',
-  'auth_finishOidc',
   'auth_getMe',
   'auth_listSessions',
   'auth_register',
@@ -100,7 +97,6 @@ assert.deepEqual(operationIds.sort(), [
   'auth_revokeSession',
   'auth_signIn',
   'auth_signOut',
-  'auth_startOidc',
   'auth_verifyEmail',
   'health_check',
 ]);
@@ -120,8 +116,6 @@ assert.deepEqual(responseStatuses, {
   '/api/v1/auth/email/verification': { post: ['202'] },
   '/api/v1/auth/email/verify': { post: ['200'] },
   '/api/v1/auth/me': { get: ['200'] },
-  '/api/v1/auth/oidc/{provider}/callback': { get: ['302'] },
-  '/api/v1/auth/oidc/{provider}/login': { get: ['302'] },
   '/api/v1/auth/password/forgot': { post: ['202'] },
   '/api/v1/auth/password/reset': { post: ['200'] },
   '/api/v1/auth/register': { post: ['202'] },
@@ -131,15 +125,6 @@ assert.deepEqual(responseStatuses, {
   '/api/v1/auth/sign-out': { post: ['204'] },
   '/health': { get: ['200', '503'] },
 });
-for (const path of [
-  '/api/v1/auth/oidc/{provider}/login',
-  '/api/v1/auth/oidc/{provider}/callback',
-]) {
-  assert.equal(
-    document.paths[path].get.responses['302'].headers.Location.schema.format,
-    'uri',
-  );
-}
 assert.deepEqual(document.paths['/api/v1/auth/me'].get.security, [
   { sessionCookie: [] },
 ]);

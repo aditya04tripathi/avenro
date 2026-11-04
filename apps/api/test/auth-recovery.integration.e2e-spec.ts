@@ -1,3 +1,4 @@
+import { InMemoryMailTransport, MailTransport } from '@nestjs/mail';
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import { Test } from '@nestjs/testing';
 
@@ -13,12 +14,14 @@ const databaseUrl = process.env.TEST_DATABASE_URL;
 describe.skipIf(!databaseUrl)('persistent email recovery routes', () => {
   let app: NestNodeApplication;
   let database: ReturnType<typeof createDisposableTestDatabase>;
-  let sentMessages: string[];
-  let fetchMock: ReturnType<typeof vi.fn>;
+  let mailTransport: InMemoryMailTransport;
 
   beforeAll(async () => {
-    process.env.RESEND_API_KEY = 'test-only-resend-key';
-    process.env.MAIL_FROM = 'Avenro <no-reply@example.test>';
+    process.env.SMTP_HOST = 'smtp.zoho.com';
+    process.env.SMTP_PORT = '465';
+    process.env.SMTP_USER = 'avenro@adityatripathi.dev';
+    process.env.SMTP_PASSWORD = 'test-only-password';
+    process.env.MAIL_FROM = 'avenro@adityatripathi.dev';
     process.env.AUTH_RATE_LIMIT_HMAC_KEY =
       'test-only-auth-rate-limit-key-32-bytes';
     process.env.APP_ORIGIN ??= 'http://localhost:3000';
@@ -26,19 +29,15 @@ describe.skipIf(!databaseUrl)('persistent email recovery routes', () => {
     process.env.PORT ??= '3001';
     process.env.NODE_ENV = 'test';
 
-    sentMessages = [];
-    fetchMock = vi.fn(async (_input: string, init: RequestInit) => {
-      const body = JSON.parse(String(init.body)) as { text: string };
-      sentMessages.push(body.text);
-      return new Response(null, { status: 200 });
-    });
-    vi.stubGlobal('fetch', fetchMock);
+    mailTransport = new InMemoryMailTransport();
 
     const { AppModule } = await import('../src/app.module.js');
     database = createDisposableTestDatabase();
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(MailTransport)
+      .useValue(mailTransport)
       .overrideProvider(PrismaService)
       .useValue(database.client)
       .compile();
@@ -53,7 +52,6 @@ describe.skipIf(!databaseUrl)('persistent email recovery routes', () => {
   afterAll(async () => {
     await app?.close();
     await database?.cleanup();
-    vi.unstubAllGlobals();
   });
 
   it('verifies the current address and revokes sessions after password reset', async () => {
@@ -65,8 +63,8 @@ describe.skipIf(!databaseUrl)('persistent email recovery routes', () => {
       .post('/api/v1/auth/register')
       .send({ email, password: oldPassword })
       .expect(202, { accepted: true });
-    await vi.waitFor(() => expect(sentMessages).toHaveLength(1));
-    const verificationToken = getToken(sentMessages[0]);
+    await vi.waitFor(() => expect(mailTransport.mails).toHaveLength(1));
+    const verificationToken = getToken(mailTransport.mails[0]?.text);
 
     const signIn = await request(app.getHttpServer())
       .post('/api/v1/auth/sign-in')
@@ -74,9 +72,7 @@ describe.skipIf(!databaseUrl)('persistent email recovery routes', () => {
       .expect(200);
     const cookie = signIn.headers['set-cookie'][0].split(';', 1)[0];
 
-    fetchMock.mockImplementationOnce(
-      async () => new Response(null, { status: 503 }),
-    );
+    mailTransport.failNext(new Error('SMTP unavailable'));
     const mailFailure = await request(app.getHttpServer())
       .post('/api/v1/auth/email/verification')
       .set('Cookie', cookie)
@@ -96,8 +92,8 @@ describe.skipIf(!databaseUrl)('persistent email recovery routes', () => {
       .post('/api/v1/auth/password/forgot')
       .send({ email })
       .expect(202, { accepted: true });
-    await vi.waitFor(() => expect(sentMessages).toHaveLength(2));
-    const resetToken = getToken(sentMessages[1]);
+    await vi.waitFor(() => expect(mailTransport.mails).toHaveLength(2));
+    const resetToken = getToken(mailTransport.mails[1]?.text);
 
     await request(app.getHttpServer())
       .post('/api/v1/auth/password/reset')
@@ -121,8 +117,8 @@ describe.skipIf(!databaseUrl)('persistent email recovery routes', () => {
       .post('/api/v1/auth/register')
       .send({ email: changedAddress, password: oldPassword })
       .expect(202);
-    await vi.waitFor(() => expect(sentMessages).toHaveLength(3));
-    const oldAddressToken = getToken(sentMessages[2]);
+    await vi.waitFor(() => expect(mailTransport.mails).toHaveLength(3));
+    const oldAddressToken = getToken(mailTransport.mails[2]?.text);
     await database.client.user.update({
       where: { email: changedAddress },
       data: { email: `updated-${changedAddress}`, emailVerified: false },

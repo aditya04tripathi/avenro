@@ -1,7 +1,6 @@
 import {
   CurrentUser,
   EmailVerificationService,
-  OidcService,
   PasswordResetService,
   Public,
 } from '@nestjs/authentication';
@@ -9,13 +8,9 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
-  Param,
   Post,
-  Query,
-  Redirect,
   Req,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -23,7 +18,6 @@ import type { NodeRequest } from '@nestjs/platform-node';
 import {
   ApiAcceptedResponse,
   ApiCookieAuth,
-  ApiFoundResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
@@ -42,7 +36,6 @@ export class AuthRecoveryController {
   constructor(
     private readonly emailVerification: EmailVerificationService,
     private readonly passwordReset: PasswordResetService,
-    private readonly oidc: OidcService,
     private readonly auth: AuthService,
   ) {}
 
@@ -102,41 +95,6 @@ export class AuthRecoveryController {
       throw new BadRequestException('Invalid or expired link');
     }
     return { reset: true };
-  }
-
-  @Public()
-  @Get('oidc/:provider/login')
-  @Redirect()
-  @ApiFoundResponse({
-    description: 'Redirects to the identity provider.',
-    headers: {
-      Location: { schema: { type: 'string', format: 'uri' } },
-    },
-  })
-  @ApiOperation({ operationId: 'auth_startOidc' })
-  startOidc(
-    @Param('provider') provider: string,
-    @Query('redirectTo') redirectTo?: string,
-    @Query('link') link?: string,
-  ) {
-    return this.oidc.start(provider, { redirectTo, link: link === 'true' });
-  }
-
-  @Public()
-  @Get('oidc/:provider/callback')
-  @Redirect()
-  @ApiFoundResponse({
-    description: 'Redirects to the application.',
-    headers: {
-      Location: { schema: { type: 'string', format: 'uri' } },
-    },
-  })
-  @ApiOperation({ operationId: 'auth_finishOidc' })
-  finishOidc(
-    @Param('provider') provider: string,
-    @Query() query: Record<string, string>,
-  ) {
-    return this.oidc.finish(provider, query);
   }
 }
 

@@ -7,7 +7,7 @@ import {
   type PasswordResetLink,
 } from '@nestjs/authentication';
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Mailer } from '@nestjs/mail';
 
 import { PrismaService } from '@/prisma/prisma.service.js';
 
@@ -15,7 +15,7 @@ import { PrismaService } from '@/prisma/prisma.service.js';
 export class TransactionalEmailProvider extends EmailVerificationHandler {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
+    private readonly mailer: Mailer,
     registry: AuthenticationRegistry,
   ) {
     super();
@@ -34,25 +34,13 @@ export class TransactionalEmailProvider extends EmailVerificationHandler {
     link: EmailVerificationLink | PasswordResetLink,
     subject: string,
   ): Promise<void> {
-    const apiKey = this.config.get<string>('RESEND_API_KEY');
-    const from = this.config.get<string>('MAIL_FROM');
-    if (!apiKey || !from) {
-      throw new ServiceUnavailableException('Email delivery is unavailable');
-    }
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: [link.email],
+    try {
+      await this.mailer.send({
+        to: link.email,
         subject,
         text: `${subject}: ${link.url}`,
-      }),
-    });
-    if (!response.ok) {
+      });
+    } catch {
       throw new ServiceUnavailableException('Email delivery is unavailable');
     }
   }

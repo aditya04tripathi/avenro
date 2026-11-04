@@ -25,21 +25,30 @@ export function validateEnvironment(environment: RuntimeEnvironment) {
       .map((origin) => origin.trim())
       .filter(Boolean) ?? [];
   const rateLimitKey = environment.AUTH_RATE_LIMIT_HMAC_KEY?.trim();
-  const hasMailApiKey = Boolean(environment.RESEND_API_KEY?.trim());
-  const hasMailFrom = Boolean(environment.MAIL_FROM?.trim());
-  const hasGoogleClientId = Boolean(environment.GOOGLE_CLIENT_ID?.trim());
-  const hasGoogleClientSecret = Boolean(
-    environment.GOOGLE_CLIENT_SECRET?.trim(),
-  );
+  const mailSettings = [
+    environment.SMTP_HOST,
+    environment.SMTP_PORT,
+    environment.SMTP_USER,
+    environment.SMTP_PASSWORD,
+    environment.MAIL_FROM,
+  ].map((value) => Boolean(value?.trim()));
 
-  if (hasMailApiKey !== hasMailFrom) {
-    errors.push('RESEND_API_KEY and MAIL_FROM must be configured together');
+  if (
+    mailSettings.some(Boolean) &&
+    mailSettings.some((configured) => !configured)
+  ) {
+    errors.push(
+      'SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and MAIL_FROM must be configured together',
+    );
   }
 
-  if (hasGoogleClientId !== hasGoogleClientSecret) {
-    errors.push(
-      'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured together',
-    );
+  if (
+    environment.SMTP_PORT?.trim() &&
+    (!/^\d+$/.test(environment.SMTP_PORT.trim()) ||
+      Number(environment.SMTP_PORT) < 1 ||
+      Number(environment.SMTP_PORT) > 65535)
+  ) {
+    errors.push('SMTP_PORT must be an integer between 1 and 65535');
   }
 
   if (!databaseUrl) {

@@ -21,17 +21,19 @@ describe('validateEnvironment', () => {
     expect(() =>
       validateEnvironment({
         ...validEnvironment,
-        RESEND_API_KEY: 'private-key',
+        SMTP_HOST: 'smtp.zoho.com',
       }),
-    ).toThrow(/RESEND_API_KEY and MAIL_FROM must be configured together/);
+    ).toThrow(/SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and MAIL_FROM/);
     expect(() =>
       validateEnvironment({
         ...validEnvironment,
-        GOOGLE_CLIENT_ID: 'private-client-id',
+        SMTP_HOST: 'smtp.zoho.com',
+        SMTP_PORT: '70000',
+        SMTP_USER: 'avenro@adityatripathi.dev',
+        SMTP_PASSWORD: 'private-password',
+        MAIL_FROM: 'avenro@adityatripathi.dev',
       }),
-    ).toThrow(
-      /GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured together/,
-    );
+    ).toThrow(/SMTP_PORT must be an integer between 1 and 65535/);
   });
 
   it('reports missing or malformed values without echoing their contents', () => {
