@@ -730,6 +730,8 @@ One additional local database, `avenro_test_022empty`, was created before the te
 
 **Remaining acceptance work:** Configure sandbox Resend credentials and sender (`RESEND_API_KEY`, `MAIL_FROM`) plus Google Web OAuth client credentials (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) with the exact redirect URI `${APP_ORIGIN}/api/v1/auth/oidc/google/callback`. Then verify actual delivery and a full Google sandbox callback/sign-in. No provider credentials were configured, exposed, or used.
 
+**Mailer follow-up — 29 October 2026:** Replaced the Resend adapter with the repository's installed `@nestjs/mail` SMTP transport, aligned the recovery integration fixture with its in-memory transport, and changed configuration validation to require the complete SMTP setting set together. The Zoho mailbox exists with `avenro@adityatripathi.dev` as its primary sender. Current account SMTP authentication succeeded, and one `@nestjs/mail` delivery to the same mailbox arrived with the configured From address verified and TLS encryption confirmed. No other recipients were used. The Zoho Mail documentation describes authenticated domain mailbox/alias sending; no current contact or support inbound flows exist, so `avenro+contact@adityatripathi.dev` and `avenro+support@adityatripathi.dev` are reserved as recipient/routing addresses if those flows are later added, not configured as From addresses. See the Zoho SMTP and alias setup links in the handoff.
+
 ## 9. Reference index
 
 Use the `nestjs-docs` skill and its task-relevant chapters, discovered through the available skill catalog. The local corpus spans Nest 11–12 and may include features newer than an installed package. Installed declarations, package peers and runtime tests decide whether an example is usable. Read codebase-design for module/interface/seam discipline and antislop-code for comment hygiene.
@@ -757,7 +759,7 @@ The design choices and acceptance thresholds in this document are Avenro proposa
 
 **Release/readiness conclusion:** Completed 00.1–03.1 are recorded as verified within their stated local evidence. Task 03.2 remains locally verified with provider acceptance blocked. Workspace product routes and authorization are still unimplemented. Foundation release scope includes phases 00–04, so no Foundation release or workspace authorization acceptance is implied; the plan's all-included-feature gates and 17.1/18.1 evidence remain required for release readiness. No unimplemented phase is marked verified by this audit.
 
-**Remaining:** Resolve CLIENT/guest policy before implementing that classification; configure and verify Resend delivery for invitation acceptance; preserve the existing production database, provider, and deployment restrictions. No DB target was inspected, no provider was contacted, and no deployment was attempted.
+**Remaining:** Resolve CLIENT/guest policy before implementing that classification; configure and verify Zoho SMTP delivery for invitation acceptance; preserve the existing production database, provider, and deployment restrictions. No DB target was inspected, no provider was contacted, and no deployment was attempted.
 
 ### DTO/OpenAPI contract audit — 29 October 2026
 
