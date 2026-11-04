@@ -1,0 +1,15 @@
+{
+  "name": "@avenro/assets",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./brand/*": "./brand/*",
+    "./images/*": "./images/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "brand",
+    "images"
+  ]
+}

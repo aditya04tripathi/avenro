@@ -13,9 +13,5 @@
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.17.0",
-  "devDependencies": {
-    "@avenro/eslint-config": "workspace:*",
-    "@avenro/prettier-config": "workspace:*",
-    "@avenro/typescript-config": "workspace:*"
-  }
+  "devDependencies": {}
 }
