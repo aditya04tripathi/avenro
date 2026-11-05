@@ -4,7 +4,7 @@
 
 > **Status:** Product specification / planned development  
 > **Scope:** v1.0 roadmap  
-> **Stack:** Next.js · TypeScript · Firebase · Cloud Firestore  
+> **Stack:** Next.js · TypeScript · Supabase (Auth, Postgres, Storage)
 > **Development:** Solo-developer portfolio project
 
 Avenro is a proposed Agile project management platform that brings together Jira-inspired work tracking, Scrum management, meeting agendas and minutes, project documentation, team collaboration, and traceable decision-making.

@@ -1,37 +1,34 @@
 # AGENTS.md
 
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+
 ## Code Formatting & Prettier
 
-- Every change must strictly adhere to the monorepo's Prettier configurations (`packages/prettier-config`, `apps/api/prettier.config.mjs`, and `apps/web/prettier.config.mjs`).
-- Import sorting is enforced via `@trivago/prettier-plugin-sort-imports`.
-- Import order in `apps/api`:
-  1. `^@nestjs/(.*)$`
-  2. `^@prisma/(.*)$`
-  3. `<THIRD_PARTY_MODULES>`
-  4. `^src/(.*)$`
-  5. `^@/(.*)$`
-  6. `^[./]`
-- Import order in `apps/web`:
-  1. `^(react/(.*)$)|^(react$)$`
-  2. `^(next/(.*)$)|^(next$)$`
+- Every change must strictly adhere to the root `prettier.config.mjs`.
+- Import sorting is enforced via `@trivago/prettier-plugin-sort-imports`. Import order:
+  1. `^(react/(.*)$)|^(react$)`
+  2. `^(next/(.*)$)|^(next$)`
   3. `<THIRD_PARTY_MODULES>`
   4. `^@/(.*)$`
   5. `^[./]`
-- Always run `pnpm format` (or package-specific format script) after making changes to verify formatting and import ordering.
+- Always run `pnpm format` after making changes to verify formatting and import ordering.
 
-## Prisma Configuration & Guidelines
+## Supabase
 
-- Prisma schema is in `apps/api/prisma/schema.prisma` and runtime config in `apps/api/prisma7.config.ts`.
-- Prisma client generation target is `apps/api/src/generated/prisma`.
-- Do not edit generated files manually. Update the schema and generate via `pnpm --filter api exec prisma generate`.
-- Do not run destructive database operations without explicit approval.
+- Migrations live in `supabase/migrations`. Start the local stack with `pnpm db:start`; reset the local database with `pnpm db:reset` (local CLI stack only).
+- Types are generated with `pnpm db:types`. Never edit generated types by hand.
+- RLS is required on every table.
 
 ## TypeScript LSP
 
 - Symptom: the `LSP` tool fails with `plugin:typescript-native-lsp:typescript crashed with exit code 1`.
 - Cause: the repo root had no `typescript` package. The root `node_modules` was empty, so the language server started from the root could not find a TypeScript install.
-- Fix: `typescript` is a root devDependency (pinned to the version apps/web uses). Run `pnpm install` at the root after cloning. `LSP findReferences` works after that.
-
-## Backend agent handoffs
-
-For work under `apps/api`, every implementing/reviewing agent must read `apps/api/AGENTS.md` and `apps/api/.agents/MEMORY.md`, and use the `nestjs-docs` skill. Instruct every authorized backend handoff to use the `nestjs-docs` skill.
+- Fix: `typescript` is a root devDependency. Run `pnpm install` at the root after cloning. `LSP findReferences` works after that.

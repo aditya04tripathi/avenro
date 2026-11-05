@@ -18,3 +18,8 @@ Steps:
 11. Old Docker data (owner approved deleting it on 5 Nov 2026). Run this step before step 5 edits `docker-compose.yml`, and only once phase 01's `domain.sql` is committed: stop the old stack with `docker compose down` from the repo root, run `docker volume ls --filter name=avenro`, and remove exactly the three volumes whose names end in `postgres_data`, `seaweedfs_data`, `redis_data` with `docker volume rm <name>`. Paste the `docker volume ls` output before and after into the commit message. Remove nothing else.
 
 Acceptance: `pnpm build`, `pnpm lint`, `pnpm typecheck` pass at root; `git ls-files | grep -E '^(apps|packages)/'` is empty; marketing page renders at `pnpm dev`.
+
+## Blockers
+
+- Acceptance `pnpm lint` fails with 4 pre-existing product errors, same rules as before the move (`apps/web` used identical config): `components/avenro-logo.tsx:37` and `components/ui/carousel.tsx:97` and `hooks/use-mobile.ts:14` (`react-hooks/set-state-in-effect`); `components/marketing/faqs.tsx:81` (`react/no-unescaped-entities`). Fix in phase 07 (faqs copy) and phase 11 (logo, hooks, carousel a11y). Not fixed here: rule 7 forbids editing `components/ui` outside phase 11.
+- `pnpm build`, `pnpm typecheck`, `pnpm format`, `pnpm dev` (HTTP 200 on `/`) pass.
