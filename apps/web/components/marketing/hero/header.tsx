@@ -5,14 +5,7 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import React from "react"
 
-const menuItems = [
-  { name: "Features", href: "#link" },
-  { name: "Pricing", href: "#link" },
-  { name: "About", href: "#link" },
-]
-
 export const HeroHeader = () => {
-  const [menuState, setMenuState] = React.useState(false)
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   React.useEffect(() => {
@@ -25,7 +18,6 @@ export const HeroHeader = () => {
   return (
     <header>
       <nav
-        data-state={menuState && "active"}
         className={cn(
           "fixed z-20 w-full transition-all duration-300",
           isScrolled &&
@@ -50,7 +42,7 @@ export const HeroHeader = () => {
                 variant="ghost"
                 className={cn(isScrolled && "lg:hidden")}
                 render={
-                  <Link href="#">
+                  <Link href="/auth/sign-in">
                     <span>Login</span>
                   </Link>
                 }
@@ -59,7 +51,7 @@ export const HeroHeader = () => {
                 nativeButton={false}
                 className={cn(isScrolled && "lg:hidden")}
                 render={
-                  <Link href="#">
+                  <Link href="/auth/sign-up">
                     <span>Sign Up</span>
                   </Link>
                 }
@@ -69,7 +61,7 @@ export const HeroHeader = () => {
                 size="sm"
                 className={cn(isScrolled ? "lg:inline-flex" : "hidden")}
                 render={
-                  <Link href="#">
+                  <Link href="/auth/sign-up">
                     <span>Get Started</span>
                   </Link>
                 }

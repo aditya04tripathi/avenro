@@ -1,19 +1,20 @@
-import { DM_Sans, Geist_Mono, Public_Sans } from "next/font/google"
+import { Rubik, Geist_Mono, Public_Sans } from "next/font/google"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
 import Footer from "@/components/marketing/footer"
 import "./globals.css"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { Toaster } from "@/components/ui/toast"
 
-const dmSansHeading = DM_Sans({
-  subsets: ["latin"],
+const rubik = Rubik({
+  subsets: ["latin", "latin-ext"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-heading",
 })
-
 const publicSans = Public_Sans({ subsets: ["latin"], variable: "--font-sans" })
-
-const fontMono = Geist_Mono({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
@@ -29,16 +30,19 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(
         "antialiased",
-        fontMono.variable,
-        "font-sans",
-        publicSans.variable,
-        dmSansHeading.variable
+        geistMono.variable,
+        rubik.variable,
+        publicSans.variable
       )}
     >
       <body>
         <ThemeProvider>
-          {children}
-          <Footer />
+          <TooltipProvider>
+            {children}
+            <Footer />
+
+            <Toaster />
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

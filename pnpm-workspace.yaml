@@ -2,3 +2,10 @@ packages:
   - apps/*
   - packages/*
   - assets
+
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@scarf/scarf'
+  - prisma
+  - puppeteer

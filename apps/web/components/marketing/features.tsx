@@ -15,8 +15,8 @@ export default function Features() {
               you stay on track and adapt to changing priorities.
             </p>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 md:mt-16 md:grid-cols-3">
-            <div className="space-y-4">
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap md:mt-16">
+            <div className="w-full space-y-4 sm:w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.667rem)]">
               <Card className="aspect-video overflow-hidden px-6">
                 <Card className="h-full translate-y-6" />
               </Card>
@@ -30,7 +30,7 @@ export default function Features() {
                 </p>
               </div>
             </div>
-            <div className="space-y-4">
+            <div className="w-full space-y-4 sm:w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.667rem)]">
               <Card className="aspect-video overflow-hidden p-6">
                 <Card className="h-full" />
               </Card>
@@ -44,7 +44,7 @@ export default function Features() {
                 </p>
               </div>
             </div>
-            <div className="space-y-4">
+            <div className="w-full space-y-4 sm:w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.667rem)]">
               <Card className="aspect-video overflow-hidden">
                 <Card className="h-full translate-6" />
               </Card>

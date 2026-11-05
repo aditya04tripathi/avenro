@@ -133,7 +133,28 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  pre {
+    @apply font-mono;
+  }
   html {
     @apply font-sans;
+  }
+  h1 {
+    @apply font-heading text-4xl font-bold;
+  }
+  h2 {
+    @apply font-heading text-3xl font-bold;
+  }
+  h3 {
+    @apply font-heading text-2xl font-bold;
+  }
+  h4 {
+    @apply font-heading text-xl font-bold;
+  }
+  h5 {
+    @apply font-heading text-lg font-bold;
+  }
+  h6 {
+    @apply font-heading text-base font-bold;
   }
 }
