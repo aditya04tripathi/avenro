@@ -38,3 +38,15 @@ Other gaps found, not blockers:
 
 - `domain-columns.txt` (named in step 6 for `export_my_data`) does not exist. Export can be built from the FK list in the schema instead.
 - `lib/legal/versions.ts` does not exist. Phase 08 creates it, so the `2026-11-01` seed check waits for phase 08.
+
+### Resolution (orchestrator, 5 Nov 2026)
+
+Use option 3, limited to the account owner's own erasure request:
+- Add `private.purge_workspace(ws uuid)` (`SECURITY DEFINER`, `search_path = ''`). It deletes every row with that `workspace_id` in FK-dependency order, children first: build the order from `pg_constraint` foreign keys, write it out explicitly in the function, and delete `workspace` last. The owner trigger allows this, because `require_workspace_owner_membership()` returns early once the `workspace` row is gone. Phase 13 reuses this function for lapsed workspaces.
+- In `prepare_account_deletion()`: for each workspace where the caller is the only ACTIVE member, call `private.purge_workspace` instead of archiving. Workspaces with other active members keep the `sole_owner` refusal when the caller is their only ACTIVE OWNER. For other workspaces, just remove the caller's memberships.
+- pgTAP: a sole-member workspace and all its child rows are gone after `prepare_account_deletion()`; a shared workspace where the caller is not the owner keeps its data and loses only the caller's membership.
+- Phase 10's deletion dialog must say "Workspaces where you are the only member are permanently deleted with all their content." (Phase 10's Amendment 2 bullet already cancels their subscriptions first.)
+
+Other gaps:
+- `domain-columns.txt` was removed with `supabase/_extract/` in phase 03. Build the `export_my_data()` column list from `information_schema` / `pg_constraint` foreign keys that reference `public.profiles(id)`.
+- Create `lib/legal/versions.ts` now, with `TERMS_VERSION` and `PRIVACY_VERSION` both `"2026-11-01"`, so the seed check works. Phase 08 keeps it.
