@@ -26,6 +26,12 @@
 - Do not edit generated files manually. Update the schema and generate via `pnpm --filter api exec prisma generate`.
 - Do not run destructive database operations without explicit approval.
 
+## TypeScript LSP
+
+- Symptom: the `LSP` tool fails with `plugin:typescript-native-lsp:typescript crashed with exit code 1`.
+- Cause: the repo root had no `typescript` package. The root `node_modules` was empty, so the language server started from the root could not find a TypeScript install.
+- Fix: `typescript` is a root devDependency (pinned to the version apps/web uses). Run `pnpm install` at the root after cloning. `LSP findReferences` works after that.
+
 ## Backend agent handoffs
 
 For work under `apps/api`, every implementing/reviewing agent must read `apps/api/AGENTS.md` and `apps/api/.agents/MEMORY.md`, and use the `nestjs-docs` skill. Instruct every authorized backend handoff to use the `nestjs-docs` skill.
