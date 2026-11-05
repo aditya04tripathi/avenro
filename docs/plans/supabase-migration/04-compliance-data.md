@@ -19,3 +19,22 @@ Acceptance: `pnpm db:reset && pnpm db:test` passes; regenerate types.
 ## Amendment 2 (5 Nov 2026) — overrides earlier steps where they conflict
 
 retention table adds `trial_claims` (2 years, fraud prevention), `stripe_events` (90 days), and deletion of lapsed workspaces 30 days after read-only.
+
+## Blockers
+
+Blocked at step 6, `prepare_account_deletion()`. Nothing else in phase 04 was written: no migration, no tests, no types, no retention jobs. Phase 04 is not committed as done.
+
+- Step 6 says: for sole-member workspaces, archive them and remove memberships. The schema forbids this. `workspace_member_owner_membership_required` (`supabase/migrations/20261105000000_domain_schema.sql:2517`, deferred constraint trigger on `workspace_member` INSERT/DELETE/UPDATE, function `require_workspace_owner_membership`) raises `workspace must have exactly one active owner membership` at commit unless `workspace.owner_id` has an ACTIVE `OWNER` membership in that workspace.
+- A sole member is the owner, so removing their membership fails. Reassigning `owner_id` is impossible because no other owner exists.
+- Proven 5 Nov 2026 on the local stack in a rolled-back transaction: insert workspace, insert OWNER membership, delete that membership, then `set constraints all immediate` → `ERROR: workspace must have exactly one active owner membership`.
+
+Owner decision needed (pick one; agent must not choose):
+
+1. Relax the invariant for `ARCHIVED` workspaces (trigger skips them, or the owner membership may be removed once archived). Changes phase 03 schema.
+2. Keep the owner membership row for archived sole-owner workspaces and only scrub its `email` and `display_name`. Breaks "removes memberships" for that row.
+3. Hard-delete sole-member workspaces with their data. Destructive; needs explicit owner approval per README rule 5.
+
+Other gaps found, not blockers:
+
+- `domain-columns.txt` (named in step 6 for `export_my_data`) does not exist. Export can be built from the FK list in the schema instead.
+- `lib/legal/versions.ts` does not exist. Phase 08 creates it, so the `2026-11-01` seed check waits for phase 08.
