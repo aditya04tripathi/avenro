@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react"
 import Image from "next/image"
 import { cn } from "cn"
 import { useTheme } from "next-themes"
@@ -22,6 +22,8 @@ interface AvenroLogoProps {
   priority?: boolean
 }
 
+const emptySubscribe = () => () => {}
+
 const AvenroLogo = ({
   type = "brandmark",
   variant = "default",
@@ -31,11 +33,11 @@ const AvenroLogo = ({
   priority = false,
 }: AvenroLogoProps) => {
   const { resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  )
 
   const isDark = mounted && resolvedTheme === "dark"
 
