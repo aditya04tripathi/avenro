@@ -1,44 +1,29 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Field, FieldError, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { SignInForm } from "./sign-in-form"
 
-const SignInPage = () => {
+type SignInPageProps = {
+  searchParams: Promise<{ error?: string }>
+}
+
+const SignInPage = async ({ searchParams }: SignInPageProps) => {
+  const { error } = await searchParams
+
   return (
     <section className="mx-auto w-full max-w-lg flex-1 space-y-6">
       <h1>Welcome back!</h1>
 
-      <form action="" className="space-y-6">
-        <Field>
-          <FieldLabel htmlFor="email-address">Email Address</FieldLabel>
-          <Input
-            id="email-address"
-            name="email-address"
-            placeholder="john@doe.com"
-          />
-          <FieldError />
-        </Field>
+      {error === "link" && (
+        <p role="alert" className="text-sm text-destructive">
+          That link is invalid or has expired. Sign in or request a new one.
+        </p>
+      )}
 
-        <Field>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
-          <Input
-            id="password"
-            name="password"
-            placeholder="••••••••"
-            type="password"
-          />
-          <FieldError />
-        </Field>
+      <SignInForm />
 
-        <div className="flex flex-col items-center gap-1">
-          <Button className="w-full">Sign In</Button>
-          <Button nativeButton={false} className="w-full" variant="link">
-            <Link href="/auth/sign-up">
-              Don&apos;t have an account? Sign Up
-            </Link>
-          </Button>
-        </div>
-      </form>
+      <div className="flex flex-col items-center gap-1">
+        <Link href="/auth/forgot-password">Forgot your password?</Link>
+        <Link href="/auth/sign-up">Don&apos;t have an account? Sign Up</Link>
+      </div>
     </section>
   )
 }

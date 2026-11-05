@@ -1,14 +1,8 @@
-export interface SignUpActionState {
-  success: boolean
+export interface AuthActionState {
+  status?: "error" | "success"
   message?: string
-  fieldErrors?: {
-    name?: string
-    email?: string
-    password?: string
-    confirmPassword?: string
-  }
+  // Keyed by the form field name, for example "email-address".
+  fieldErrors?: Record<string, string>
 }
 
-export const initialSignUpState: SignUpActionState = {
-  success: false,
-}
+export const initialAuthActionState: AuthActionState = {}
