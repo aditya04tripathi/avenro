@@ -1,11 +1,9 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, CirclePlay } from "lucide-react"
+import { ChevronRight } from "lucide-react"
+import heroImage from "@/assets/images/generated/hero-img.webp"
 import { HeroHeader } from "@/components/marketing/hero/header"
 import { Button } from "@/components/ui/button"
-import { Spotify } from "@/components/ui/svgs/spotify"
-import { SupabaseFull } from "@/components/ui/svgs/supabase"
-import { VercelFull } from "@/components/ui/svgs/vercel"
 
 export default function HeroSection() {
   return (
@@ -17,12 +15,15 @@ export default function HeroSection() {
             <div className="relative z-10 mx-auto w-full max-w-5xl px-6">
               <div className="md:w-1/2">
                 <div>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    Avenro is in early development.
+                  </p>
                   <h1 className="max-w-md text-5xl font-medium text-balance md:text-6xl">
-                    Simple payments for startups
+                    Project work, connected
                   </h1>
                   <p className="my-8 max-w-2xl text-xl text-balance text-muted-foreground">
-                    One tool that does it all. Search, generate, analyze, and
-                    chat—right inside Tailark.
+                    Backlog, sprints, meetings and decisions in one calm place.
+                    Each decision links to the work it affects.
                   </p>
 
                   <div className="flex items-center gap-3">
@@ -31,52 +32,36 @@ export default function HeroSection() {
                       size="lg"
                       className="pr-4.5"
                       render={
-                        <Link href="#link">
-                          <span className="text-nowrap">Get Started</span>
+                        <Link href="/auth/sign-up">
+                          <span className="text-nowrap">Get started</span>
                           <ChevronRight className="opacity-50" />
                         </Link>
                       }
                     />
-                    <Button
-                      key={2}
-                      nativeButton={false}
-                      size="lg"
-                      variant="outline"
-                      className="pl-5"
-                      render={
-                        <Link href="#link">
-                          <CirclePlay className="fill-primary/25 stroke-primary" />
-                          <span className="text-nowrap">Watch video</span>
-                        </Link>
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-10">
-                  <p className="text-muted-foreground">Trusted by teams at :</p>
-                  <div className="mt-6 flex items-center gap-8 **:fill-foreground">
-                    <VercelFull height={20} width={76} />
-                    <Spotify height={22} width={73} />
-                    <SupabaseFull className="h-[22px]" />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-24 translate-x-12 perspective-near md:absolute md:top-40 md:-right-6 md:bottom-16 md:left-1/2 md:mt-0 md:translate-x-0">
+            <figure
+              data-ai-generated="true"
+              className="m-0 mt-24 translate-x-12 perspective-near md:absolute md:top-40 md:-right-6 md:bottom-16 md:left-1/2 md:mt-0 md:translate-x-0"
+            >
               <div className="relative h-full before:absolute before:-inset-x-4 before:top-0 before:bottom-7 before:skew-x-6 before:rounded-[calc(var(--radius)+1rem)] before:border before:border-foreground/5 before:bg-foreground/5">
-                <div className="relative h-full -translate-y-12 skew-x-6 overflow-hidden rounded-(--radius) border border-transparent bg-background shadow-md ring-1 shadow-foreground/10 ring-foreground/5">
+                <div className="relative aspect-4/3 h-full -translate-y-12 skew-x-6 overflow-hidden rounded-(--radius) border border-transparent bg-background shadow-md ring-1 shadow-foreground/10 ring-foreground/5 md:aspect-auto">
                   <Image
-                    src="/mist/tailark.png"
-                    alt="app screen"
-                    width="2880"
-                    height="1842"
-                    className="size-full object-cover object-top-left"
+                    src={heroImage}
+                    alt=""
+                    fill
+                    sizes="(min-width: 768px) 50vw, 100vw"
+                    className="object-cover object-top-left"
                   />
+                  <figcaption className="absolute bottom-3 left-3 rounded-md bg-background/90 px-2 py-1 text-xs text-muted-foreground">
+                    AI-generated image
+                  </figcaption>
                 </div>
               </div>
-            </div>
+            </figure>
           </div>
         </section>
       </main>

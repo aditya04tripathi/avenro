@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Calendar, ChevronRight } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function CallToAction() {
@@ -8,21 +8,18 @@ export default function CallToAction() {
       <div className="bg-muted py-12">
         <div className="mx-auto max-w-5xl px-6">
           <h2 className="max-w-lg text-3xl font-semibold text-balance text-foreground lg:text-4xl">
-            <span className="text-muted-foreground">
-              Build Modern Websites.
-            </span>{" "}
-            Drive Results
+            Start with one project.
           </h2>
           <p className="mt-4 text-lg">
-            Libero sapiente aliquam quibusdam aspernatur, praesentium iusto
-            repellendus.
+            Pay per active member after a 30-day trial. Card required, cancel
+            anytime.
           </p>
           <div className="mt-8 flex gap-3">
             <Button
               nativeButton={false}
               render={
-                <Link href="#">
-                  Try Mist for Free{" "}
+                <Link href="/auth/sign-up">
+                  Start 30-day trial
                   <ChevronRight
                     strokeWidth={2.5}
                     className="size-3.5! opacity-50"
@@ -30,20 +27,6 @@ export default function CallToAction() {
                 </Link>
               }
               className="pr-2"
-            />
-
-            <Button
-              nativeButton={false}
-              render={
-                <Link href="#">
-                  <Calendar
-                    className="size-3.5! opacity-50"
-                    strokeWidth={2.5}
-                  />
-                  Request a Demo
-                </Link>
-              }
-              className="pl-2.5"
             />
           </div>
         </div>

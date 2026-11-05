@@ -12,33 +12,33 @@ export default function FAQs() {
   const faqItems = [
     {
       id: "item-1",
-      question: "How long does shipping take?",
+      question: "What is Avenro?",
       answer:
-        "Standard shipping takes 3-5 business days, depending on your location. Express shipping options are available at checkout for 1-2 business day delivery.",
+        "Avenro is a project tool for small software teams, university groups and early-stage startups. It combines backlog, boards, sprints, meetings, decisions and documents. Avenro is in early development.",
     },
     {
       id: "item-2",
-      question: "What payment methods do you accept?",
+      question: "How much does it cost?",
       answer:
-        "We accept all major credit cards (Visa, Mastercard, American Express), PayPal, Apple Pay, and Google Pay. For enterprise customers, we also offer invoicing options.",
+        "$8 per active member per month or $80 per year, 30-day free trial, card required, cancel anytime. Cancel before the trial ends and you pay nothing. Viewers and clients are free. See pricing for details.",
     },
     {
       id: "item-3",
-      question: "Can I change or cancel my order?",
+      question: "Where is my data stored and who processes it?",
       answer:
-        "You can modify or cancel your order within 1 hour of placing it. After this window, please contact our customer support team who will assist you with any changes.",
+        "Your data is stored with Supabase. Payments run through Stripe. The full list of subprocessors is on the subprocessors page.",
     },
     {
       id: "item-4",
-      question: "Do you ship internationally?",
+      question: "How do I delete my account?",
       answer:
-        "Yes, we ship to over 50 countries worldwide. International shipping typically takes 7-14 business days. Additional customs fees may apply depending on your country's import regulations.",
+        "You can delete your account from your privacy settings. Deletion is one step and removes your personal data. The privacy page explains what is kept and for how long.",
     },
     {
       id: "item-5",
-      question: "What is your return policy?",
+      question: "Who can use Avenro?",
       answer:
-        "We offer a 30-day return policy for most items. Products must be in original condition with tags attached. Some specialty items may have different return terms, which will be noted on the product page.",
+        "You must be at least 16 years old to create an account. We do not collect data from children under 16.",
     },
   ]
 
@@ -47,11 +47,10 @@ export default function FAQs() {
       <div className="mx-auto max-w-5xl px-4 md:px-6">
         <div>
           <h2 className="text-4xl font-semibold text-foreground">
-            Frequently Asked Questions
+            Frequently asked questions
           </h2>
           <p className="mt-4 text-lg text-balance text-muted-foreground">
-            Discover quick and comprehensive answers to common questions about
-            our platform, services, and features.
+            Short answers to the questions we hear most.
           </p>
         </div>
 
@@ -78,9 +77,12 @@ export default function FAQs() {
           </Accordion>
 
           <p className="mt-6 text-muted-foreground">
-            Can&apos;t find what you&apos;re looking for? Contact our{" "}
-            <Link href="#" className="font-medium text-primary hover:underline">
-              customer support team
+            Still have a question? Contact us at{" "}
+            <Link
+              href="/contact"
+              className="font-medium text-primary hover:underline"
+            >
+              the contact page
             </Link>
           </p>
         </div>
