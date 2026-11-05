@@ -2,7 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict nbue62BFIp0F4ePO4Hv7lhXaCwwPX9xx8VTEUmmO7RxE17iDlfiuvCKhEoJ1E8X
 
 -- Dumped from database version 17.11
 -- Dumped by pg_dump version 17.11
@@ -23,7 +22,6 @@ SET row_security = off;
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA public;
 
 
 --
@@ -557,15 +555,15 @@ CREATE TABLE public.action_item (
     description text DEFAULT ''::text NOT NULL,
     status public.action_item_status DEFAULT 'OPEN'::public.action_item_status NOT NULL,
     assignee_id uuid,
-    due_at timestamp(3) without time zone,
-    completed_at timestamp(3) without time zone,
+    due_at timestamp with time zone,
+    completed_at timestamp with time zone,
     linked_issue_id uuid,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL,
     revision integer DEFAULT 1 NOT NULL
 );
 
@@ -583,7 +581,7 @@ CREATE TABLE public.activity_event (
     action text NOT NULL,
     actor_id uuid NOT NULL,
     changes jsonb NOT NULL,
-    occurred_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    occurred_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -600,7 +598,7 @@ CREATE TABLE public.audit_event (
     entity_path text NOT NULL,
     request_id text NOT NULL,
     metadata jsonb NOT NULL,
-    occurred_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    occurred_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -617,8 +615,8 @@ CREATE TABLE public.board_column (
     legacy_id text,
     name text NOT NULL,
     rank text NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL
 );
 
 
@@ -633,12 +631,12 @@ CREATE TABLE public.board_config (
     name text NOT NULL,
     kind public.board_kind NOT NULL,
     filter jsonb NOT NULL,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL,
     revision integer DEFAULT 1 NOT NULL
 );
 
@@ -656,14 +654,14 @@ CREATE TABLE public.change_request (
     status public.change_request_status DEFAULT 'PROPOSED'::public.change_request_status NOT NULL,
     requester_id uuid NOT NULL,
     approver_id uuid,
-    decision_at timestamp(3) without time zone,
+    decision_at timestamp with time zone,
     linked_issue_ids text[],
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -681,9 +679,9 @@ CREATE TABLE public.client_portal_item (
     summary text NOT NULL,
     content jsonb NOT NULL,
     status public.portal_status DEFAULT 'PUBLISHED'::public.portal_status NOT NULL,
-    published_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    published_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     published_by uuid NOT NULL,
-    source_updated_at timestamp(3) without time zone NOT NULL
+    source_updated_at timestamp with time zone NOT NULL
 );
 
 
@@ -702,13 +700,13 @@ CREATE TABLE public.decision (
     rationale text NOT NULL,
     status public.decision_status DEFAULT 'PROPOSED'::public.decision_status NOT NULL,
     approver_ids text[],
-    decided_at timestamp(3) without time zone,
+    decided_at timestamp with time zone,
     supersedes_id uuid,
     linked_record_ids text[],
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL,
     revision integer DEFAULT 1 NOT NULL
 );
 
@@ -724,12 +722,12 @@ CREATE TABLE public.document_folder (
     name text NOT NULL,
     parent_folder_id uuid,
     rank text NOT NULL,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -745,8 +743,8 @@ CREATE TABLE public.document_version (
     version integer NOT NULL,
     title text NOT NULL,
     body text NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL
 );
 
 
@@ -764,12 +762,12 @@ CREATE TABLE public.integration (
     settings jsonb NOT NULL,
     secret_ref text,
     connected_by uuid NOT NULL,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -796,13 +794,13 @@ CREATE TABLE public.issue (
     sprint_id uuid,
     estimate double precision,
     labels text[],
-    due_at timestamp(3) without time zone,
-    archived_at timestamp(3) without time zone,
+    due_at timestamp with time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL,
     workflow_status_id uuid NOT NULL,
     revision integer DEFAULT 1 NOT NULL
 );
@@ -819,12 +817,12 @@ CREATE TABLE public.issue_comment (
     issue_id uuid NOT NULL,
     author_id uuid NOT NULL,
     body text NOT NULL,
-    edited_at timestamp(3) without time zone,
-    deleted_at timestamp(3) without time zone,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    edited_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -839,12 +837,12 @@ CREATE TABLE public.issue_dependency (
     blocking_issue_id uuid NOT NULL,
     blocked_issue_id uuid NOT NULL,
     type public.issue_dependency_type NOT NULL,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -860,20 +858,20 @@ CREATE TABLE public.meeting (
     title text NOT NULL,
     type public.meeting_type NOT NULL,
     status public.meeting_status DEFAULT 'SCHEDULED'::public.meeting_status NOT NULL,
-    starts_at timestamp(3) without time zone NOT NULL,
-    ends_at timestamp(3) without time zone NOT NULL,
+    starts_at timestamp with time zone NOT NULL,
+    ends_at timestamp with time zone NOT NULL,
     organizer_id uuid NOT NULL,
     facilitator_id uuid,
     minute_taker_id uuid,
     participant_ids text[],
     location text DEFAULT ''::text NOT NULL,
     meeting_url text,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL,
     revision integer DEFAULT 1 NOT NULL
 );
 
@@ -892,10 +890,10 @@ CREATE TABLE public.meeting_agenda_item (
     rank text NOT NULL,
     presenter_id text,
     duration_minutes integer,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -912,13 +910,13 @@ CREATE TABLE public.meeting_minutes (
     version integer DEFAULT 1 NOT NULL,
     summary text NOT NULL,
     attendance jsonb NOT NULL,
-    finalized_at timestamp(3) without time zone,
+    finalized_at timestamp with time zone,
     finalized_by text,
     supersedes_id uuid,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL,
     revision integer DEFAULT 1 NOT NULL
 );
 
@@ -934,8 +932,8 @@ CREATE TABLE public.meeting_minutes_version (
     minutes_id uuid NOT NULL,
     version integer NOT NULL,
     snapshot jsonb NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL
 );
 
 
@@ -950,15 +948,15 @@ CREATE TABLE public.milestone (
     title text NOT NULL,
     description text DEFAULT ''::text NOT NULL,
     status public.milestone_status DEFAULT 'PLANNED'::public.milestone_status NOT NULL,
-    due_at timestamp(3) without time zone,
-    completed_at timestamp(3) without time zone,
+    due_at timestamp with time zone,
+    completed_at timestamp with time zone,
     issue_ids text[],
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -974,8 +972,8 @@ CREATE TABLE public.notification (
     title text NOT NULL,
     body text NOT NULL,
     target_path text,
-    read_at timestamp(3) without time zone,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    read_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -987,8 +985,8 @@ CREATE TABLE public.profiles (
     id uuid DEFAULT public.uuid_generate_v7() NOT NULL,
     display_name text DEFAULT ''::text NOT NULL,
     photo_url text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     onboarded_at timestamp with time zone,
     age_confirmed_at timestamp with time zone
@@ -1011,12 +1009,12 @@ CREATE TABLE public.project (
     lead_id uuid NOT NULL,
     next_issue_number integer DEFAULT 1 NOT NULL,
     timezone text DEFAULT 'UTC'::text NOT NULL,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by uuid NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1033,12 +1031,12 @@ CREATE TABLE public.project_document (
     body text NOT NULL,
     status public.document_status DEFAULT 'DRAFT'::public.document_status NOT NULL,
     current_version integer DEFAULT 1 NOT NULL,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL,
     revision integer DEFAULT 1 NOT NULL
 );
 
@@ -1054,14 +1052,14 @@ CREATE TABLE public.project_goal (
     title text NOT NULL,
     description text DEFAULT ''::text NOT NULL,
     status public.goal_status DEFAULT 'NOT_STARTED'::public.goal_status NOT NULL,
-    target_at timestamp(3) without time zone,
+    target_at timestamp with time zone,
     owner_id uuid,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1074,8 +1072,8 @@ CREATE TABLE public.project_key_reservation (
     workspace_id uuid NOT NULL,
     project_id uuid NOT NULL,
     key text NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL
 );
 
 
@@ -1090,10 +1088,10 @@ CREATE TABLE public.project_membership (
     user_id uuid NOT NULL,
     roles public.project_role[],
     status public.membership_status DEFAULT 'ACTIVE'::public.membership_status NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1110,11 +1108,11 @@ CREATE TABLE public.project_status_update (
     accomplishments text[],
     risks text[],
     author_id uuid NOT NULL,
-    reported_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    reported_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1134,12 +1132,12 @@ CREATE TABLE public.requirement (
     priority public.priority DEFAULT 'MEDIUM'::public.priority NOT NULL,
     linked_issue_ids text[],
     source_document_id uuid,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1156,13 +1154,13 @@ CREATE TABLE public.retrospective (
     template public.retrospective_template DEFAULT 'WENT_WELL_IMPROVE_ACTIONS'::public.retrospective_template NOT NULL,
     status public.retrospective_status DEFAULT 'OPEN'::public.retrospective_status NOT NULL,
     facilitator_id uuid NOT NULL,
-    closed_at timestamp(3) without time zone,
-    archived_at timestamp(3) without time zone,
+    closed_at timestamp with time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1180,10 +1178,10 @@ CREATE TABLE public.retrospective_feedback (
     body text NOT NULL,
     anonymous boolean DEFAULT false NOT NULL,
     vote_count integer DEFAULT 0 NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1202,13 +1200,13 @@ CREATE TABLE public.risk (
     impact integer NOT NULL,
     owner_id uuid,
     mitigation_plan text DEFAULT ''::text NOT NULL,
-    review_at timestamp(3) without time zone,
-    archived_at timestamp(3) without time zone,
+    review_at timestamp with time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1224,10 +1222,10 @@ CREATE TABLE public.saved_filter (
     name text NOT NULL,
     query jsonb NOT NULL,
     shared boolean DEFAULT false NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1242,17 +1240,17 @@ CREATE TABLE public.sprint (
     name text NOT NULL,
     goal text DEFAULT ''::text NOT NULL,
     status public.sprint_status DEFAULT 'PLANNED'::public.sprint_status NOT NULL,
-    start_at timestamp(3) without time zone,
-    end_at timestamp(3) without time zone,
-    started_at timestamp(3) without time zone,
-    completed_at timestamp(3) without time zone,
-    committed_at timestamp(3) without time zone,
-    archived_at timestamp(3) without time zone,
+    start_at timestamp with time zone,
+    end_at timestamp with time zone,
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    committed_at timestamp with time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL,
     revision integer DEFAULT 1 NOT NULL
 );
 
@@ -1269,7 +1267,7 @@ CREATE TABLE public.sprint_scope_change (
     issue_id uuid NOT NULL,
     change public.scope_change_type NOT NULL,
     actor_id text NOT NULL,
-    occurred_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    occurred_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -1287,7 +1285,7 @@ CREATE TABLE public.sprint_snapshot (
     completed_issue_ids text[],
     story_points_committed double precision NOT NULL,
     story_points_completed double precision NOT NULL,
-    snapshot_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    snapshot_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -1305,12 +1303,12 @@ CREATE TABLE public.stakeholder (
     role text NOT NULL,
     influence public.influence_level DEFAULT 'MEDIUM'::public.influence_level NOT NULL,
     interest public.interest_level DEFAULT 'MEDIUM'::public.interest_level NOT NULL,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1329,9 +1327,9 @@ CREATE TABLE public.storage_object (
     size_bytes bigint NOT NULL,
     etag text,
     uploader_id uuid NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    archived_at timestamp(3) without time zone
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    archived_at timestamp with time zone
 );
 
 
@@ -1348,8 +1346,8 @@ CREATE TABLE public.webhook_delivery (
     event_type text NOT NULL,
     status public.webhook_status DEFAULT 'PENDING'::public.webhook_status NOT NULL,
     attempts integer DEFAULT 0 NOT NULL,
-    received_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    completed_at timestamp(3) without time zone
+    received_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    completed_at timestamp with time zone
 );
 
 
@@ -1365,10 +1363,10 @@ CREATE TABLE public.workflow_status (
     category public.status_category NOT NULL,
     rank text NOT NULL,
     color text NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL,
     revision integer DEFAULT 1 NOT NULL
 );
 
@@ -1383,7 +1381,7 @@ CREATE TABLE public.workflow_transition (
     project_id uuid NOT NULL,
     from_status_id uuid NOT NULL,
     to_status_id uuid NOT NULL,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -1398,12 +1396,12 @@ CREATE TABLE public.workspace (
     description text DEFAULT ''::text NOT NULL,
     owner_id uuid NOT NULL,
     status public.workspace_status DEFAULT 'ACTIVE'::public.workspace_status NOT NULL,
-    archived_at timestamp(3) without time zone,
+    archived_at timestamp with time zone,
     archived_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1418,12 +1416,12 @@ CREATE TABLE public.workspace_invitation (
     role public.workspace_role NOT NULL,
     status public.invitation_status DEFAULT 'PENDING'::public.invitation_status NOT NULL,
     token_hash text NOT NULL,
-    expires_at timestamp(3) without time zone NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
     accepted_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_by text NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL,
-    updated_by text NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid NOT NULL
 );
 
 
@@ -1439,10 +1437,10 @@ CREATE TABLE public.workspace_member (
     display_name text NOT NULL,
     role public.workspace_role DEFAULT 'MEMBER'::public.workspace_role NOT NULL,
     status public.membership_status DEFAULT 'ACTIVE'::public.membership_status NOT NULL,
-    joined_at timestamp(3) without time zone,
+    joined_at timestamp with time zone,
     invited_by text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -3362,5 +3360,184 @@ ALTER TABLE ONLY public.workspace
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nbue62BFIp0F4ePO4Hv7lhXaCwwPX9xx8VTEUmmO7RxE17iDlfiuvCKhEoJ1E8X
+--
+-- Audit columns: created_by and updated_by reference the acting profile (Amendment 2)
+--
+
+ALTER TABLE ONLY public.action_item
+    ADD CONSTRAINT action_item_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.action_item
+    ADD CONSTRAINT action_item_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.board_column
+    ADD CONSTRAINT board_column_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.board_config
+    ADD CONSTRAINT board_config_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.board_config
+    ADD CONSTRAINT board_config_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.change_request
+    ADD CONSTRAINT change_request_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.change_request
+    ADD CONSTRAINT change_request_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.decision
+    ADD CONSTRAINT decision_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.decision
+    ADD CONSTRAINT decision_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.document_folder
+    ADD CONSTRAINT document_folder_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.document_folder
+    ADD CONSTRAINT document_folder_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.document_version
+    ADD CONSTRAINT document_version_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.integration
+    ADD CONSTRAINT integration_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.integration
+    ADD CONSTRAINT integration_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.issue
+    ADD CONSTRAINT issue_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.issue
+    ADD CONSTRAINT issue_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.issue_comment
+    ADD CONSTRAINT issue_comment_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.issue_comment
+    ADD CONSTRAINT issue_comment_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.issue_dependency
+    ADD CONSTRAINT issue_dependency_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.issue_dependency
+    ADD CONSTRAINT issue_dependency_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.meeting
+    ADD CONSTRAINT meeting_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.meeting
+    ADD CONSTRAINT meeting_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.meeting_agenda_item
+    ADD CONSTRAINT meeting_agenda_item_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.meeting_agenda_item
+    ADD CONSTRAINT meeting_agenda_item_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.meeting_minutes
+    ADD CONSTRAINT meeting_minutes_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.meeting_minutes
+    ADD CONSTRAINT meeting_minutes_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.meeting_minutes_version
+    ADD CONSTRAINT meeting_minutes_version_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.milestone
+    ADD CONSTRAINT milestone_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.milestone
+    ADD CONSTRAINT milestone_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.project
+    ADD CONSTRAINT project_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.project_document
+    ADD CONSTRAINT project_document_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.project_document
+    ADD CONSTRAINT project_document_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.project_goal
+    ADD CONSTRAINT project_goal_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.project_goal
+    ADD CONSTRAINT project_goal_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.project_key_reservation
+    ADD CONSTRAINT project_key_reservation_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.project_membership
+    ADD CONSTRAINT project_membership_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.project_membership
+    ADD CONSTRAINT project_membership_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.project_status_update
+    ADD CONSTRAINT project_status_update_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.project_status_update
+    ADD CONSTRAINT project_status_update_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.requirement
+    ADD CONSTRAINT requirement_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.requirement
+    ADD CONSTRAINT requirement_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.retrospective
+    ADD CONSTRAINT retrospective_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.retrospective
+    ADD CONSTRAINT retrospective_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.retrospective_feedback
+    ADD CONSTRAINT retrospective_feedback_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.retrospective_feedback
+    ADD CONSTRAINT retrospective_feedback_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.risk
+    ADD CONSTRAINT risk_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.risk
+    ADD CONSTRAINT risk_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.saved_filter
+    ADD CONSTRAINT saved_filter_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.saved_filter
+    ADD CONSTRAINT saved_filter_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.sprint
+    ADD CONSTRAINT sprint_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.sprint
+    ADD CONSTRAINT sprint_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.stakeholder
+    ADD CONSTRAINT stakeholder_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.stakeholder
+    ADD CONSTRAINT stakeholder_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.workflow_status
+    ADD CONSTRAINT workflow_status_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.workflow_status
+    ADD CONSTRAINT workflow_status_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.workspace
+    ADD CONSTRAINT workspace_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.workspace
+    ADD CONSTRAINT workspace_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.workspace_invitation
+    ADD CONSTRAINT workspace_invitation_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.workspace_invitation
+    ADD CONSTRAINT workspace_invitation_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
