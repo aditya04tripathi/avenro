@@ -51,3 +51,7 @@ Acceptance (Stripe test mode, `stripe listen` running):
 - Cancelling in the Customer Portal sets `cancel_at_period_end`.
 - Replaying the same webhook event is a no-op.
 - `pnpm test` and `pnpm db:test` pass.
+
+## Note from phase 04 (5 Nov 2026)
+
+`private.purge_workspace(ws)` was not built in phase 04. Build it here: delete every row with that `workspace_id` in FK-dependency order, children first, from `pg_constraint`, and the `workspace` row last. The owner trigger returns early once the workspace row is gone. Cover it with pgTAP. Archived sole-member workspaces from account deletion have no active subscription, so they follow the same 30-day read-only, then purge, lifecycle.

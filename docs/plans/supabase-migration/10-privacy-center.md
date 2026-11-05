@@ -18,3 +18,7 @@ Acceptance: export downloads JSON containing only the caller's data; deletion of
 ## Amendment 2 (5 Nov 2026) — overrides earlier steps where they conflict
 
 account deletion first cancels subscriptions of workspaces where the user is the sole owner (via the Stripe API, immediately, no refund unless the refund policy says so), then proceeds. The export adds subscription status and invoice links.
+
+## Note from phase 04 (5 Nov 2026), overrides earlier text
+
+The owner chose archive-and-scrub for sole-member workspaces, not purge. The deletion dialog says: "Workspaces where you are the only member are archived and your name and email are removed from them. Export them first if you want a copy." Their subscriptions are cancelled first (Amendment 2), so they lapse and are deleted by phase 13's 30-day lapse rule.
