@@ -19,7 +19,9 @@ Decisions taken with the owner (5 Nov 2026):
 | Local Supabase | Supabase CLI (`supabase start`). Root `docker-compose.yml` runs only the Next.js container. |
 | Schema scope | Port all 43 domain models to Supabase SQL with RLS. The 8 Nest auth-storage models are replaced by Supabase Auth and are not ported. |
 | Children | Block sign-up under 16 with a neutral age gate. Store only the fact the gate passed, never the birth year. No parental-consent flow is needed because no child data is collected. |
-| Billing | No billing code. Publish free-pricing, refund and renewal policies, plus a release gate for any future paid plan. |
+| Billing | Stripe subscription: one Team plan, $8 per active member per month or $80 per year, no seat minimum, 30-day card-required trial with abuse controls (phase 13). Replaces the earlier no-billing decision (5 Nov 2026). |
+| Product | A Jira alternative that fixes Jira's problems: better looking, friendlier, reductive. See [APP_PATTERNS.md](APP_PATTERNS.md) and [competitor pain points](../../product/competitor-pain-points.md). |
+| Scrum roles | Members can hold several project roles; capability matrix in [APP_PATTERNS.md](APP_PATTERNS.md#scrum-roles), enforced in RLS. |
 
 Facts verified in the code on 5 Nov 2026 (agents must not re-derive these):
 
@@ -56,7 +58,20 @@ Work one phase at a time, in order. Read this README (global rules, decisions, v
 | 10 | [Privacy center: access, deletion, marketing consent, unsubscribe](10-privacy-center.md) |
 | 11 | [Accessibility, contrast, keyboard, alt text, bundle size](11-accessibility-bundle.md) |
 | 12 | [License audit](12-licenses-images.md) |
-| 13 | [Guard checks and final verification](13-verify.md) |
+| 13 | [Billing and 30-day trial](13-billing-trial.md) |
+| 14 | [App shell and workspaces](14-app-shell-workspaces.md) |
+| 15 | [Projects and Scrum roles (reference pattern)](15-projects-scrum-roles.md) |
+| 16 | [Backlog and issues](16-backlog-issues.md) |
+| 17 | [Workflows and boards](17-workflows-boards.md) |
+| 18 | [Sprints and planning](18-sprints-planning.md) |
+| 19 | [Meetings and decisions](19-meetings-decisions.md) |
+| 20 | [Documents and requirements](20-documents-requirements.md) |
+| 21 | [Retros, risks, stakeholders, change requests](21-retros-risks-stakeholders.md) |
+| 22 | [Inbox, activity, audit, integrations, portal](22-inbox-activity-portal.md) |
+| 23 | [Export, Jira import and polish](23-export-import-polish.md) |
+| 24 | [Guard checks and final verification](24-verify.md) |
+
+Phases 14–23 also read [APP_PATTERNS.md](APP_PATTERNS.md).
 
 ## Global rules for every agent
 
@@ -104,17 +119,18 @@ Work one phase at a time, in order. Read this README (global rules, decisions, v
 | No customer logos without permission | 07 remove "Trusted by" logos and unused brand SVGs |
 | Verify image, font, code licenses | 12 |
 | Open source license obligations | 12 `THIRD_PARTY_NOTICES.md` |
-| Refund policy | 08 `/refunds` |
-| Easy subscription cancellation | No subscriptions; 08 refunds/pricing commitment + release gate below |
-| Disclose auto-renewals | 08 `/pricing` states none; release gate |
-| Remove hidden fees | 08 `/pricing` |
+| Refund policy | 08 `/refunds` (subscription terms per Amendment 2) |
+| Easy subscription cancellation | 13 Stripe Customer Portal, cancel anytime; 14 billing page |
+| Disclose auto-renewals | 13 Checkout text and reminders, 08 `/pricing` and `/terms` |
+| Remove hidden fees | 08 `/pricing` (price per member, tax at checkout), 13 Checkout shows the total |
+| Prevent trial abuse | 13 card fingerprint, normalized email, workspace and profile claims, Radar |
 | Realistic uptime commitments | 08 terms: no SLA, best effort; 13 guard on "99.9%" claims |
 | Publish subprocessors list | 08 `/subprocessors` |
 | Data processing agreements | Owner accepted (5 Nov 2026); links on `/subprocessors` (08) |
 | DMCA registration | Checked; owner chose not to register a designated agent (5 Nov 2026). Note: without one, US DMCA §512 safe harbor is unavailable. Terms keep a copyright-complaint contact. |
 | Business contact details | 08 `company.ts`, `/contact`, footer |
 
-Release gate for any future paid plan (README; implement with the `stripe-best-practices` and `stripe-docs` skills): checkout must show price, billing interval, renewal date and total including tax before payment; cancellation must be self-serve in `/account` in as few steps as sign-up; renewal reminder email before annual renewals; refund window stated on `/refunds`; `/pricing` and terms updated and `TERMS_VERSION` bumped.
+Billing requirements (implemented in phase 13 with the `stripe-best-practices` and `stripe-docs` skills): checkout must show price, billing interval, renewal date and total including tax before payment; cancellation must be self-serve in `/account` in as few steps as sign-up; renewal reminder email before annual renewals; refund window stated on `/refunds`; `/pricing` and terms updated and `TERMS_VERSION` bumped.
 
 
 ## Owner actions
@@ -122,6 +138,9 @@ Release gate for any future paid plan (README; implement with the `stripe-best-p
 1. Commit or stash current WIP before phase 00.
 2. Fill `lib/legal/company.ts`: legal name, postal address, contact and privacy emails, governing law, jurisdiction, refund window.
 3. Confirm the retention defaults in phase 04 or change them.
+4. Before phase 13: create a Stripe test-mode account and put `STRIPE_SECRET_KEY` (test) in `.env`; run `stripe listen --forward-to localhost:3000/api/stripe/webhook` and put its `STRIPE_WEBHOOK_SECRET` in `.env`. In the Stripe dashboard, enable Radar's free-trial-abuse control, the trial-ending and renewal reminder emails, Stripe Tax, and the Customer Portal (cancel at period end, switch monthly/yearly, update card, invoices).
+
+Known limit: the trial-abuse controls make abuse costly and detectable, but no system can stop someone who has many real cards and real email addresses. Avenro's documentation states this limit plainly instead of promising zero abuse.
 
 Resolved by the owner on 5 Nov 2026 (no agent action beyond what the phases say):
 - Legal review: done.
@@ -134,7 +153,7 @@ Resolved by the owner on 5 Nov 2026 (no agent action beyond what the phases say)
 - Uncommitted WIP: kept and committed in phase 00.
 
 
-## Verification (end to end, run in phase 13)
+## Verification (end to end, run in phase 24)
 
 1. `pnpm format && pnpm lint && pnpm typecheck && pnpm check:compliance` pass.
 2. `pnpm db:reset && pnpm db:test` pass (RLS, onboarding trigger, deletion, export).

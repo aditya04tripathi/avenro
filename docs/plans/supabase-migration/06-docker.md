@@ -13,3 +13,7 @@ Steps:
 6. README "Run locally": `pnpm db:start`, copy `.env.example` → `.env` and fill keys from `pnpm exec supabase status -o env`, `docker compose up --build`, open `http://localhost:3000`.
 
 Acceptance: `docker compose up --build` serves the site; sign-up and sign-in work inside the container (proves the cookie-name fix); healthcheck is healthy; container runs as non-root (`docker compose exec web id -u` ≠ 0).
+
+## Amendment 2 (5 Nov 2026) — overrides earlier steps where they conflict
+
+compose adds service `cron` (`alpine:3` + `curl`, `crond`, hourly `POST http://web:3000/api/cron/run` with header `Authorization: Bearer $CRON_SECRET`). Env gains `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `TRIAL_CLAIM_SECRET`, `CRON_SECRET`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` (local: Supabase's Mailpit SMTP at `host.docker.internal:54325`, no auth). README run steps add `stripe listen --forward-to localhost:3000/api/stripe/webhook`.

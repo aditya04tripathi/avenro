@@ -14,3 +14,7 @@ Steps:
 7. Non-users: `/privacy` and `/contact` give `privacyEmail` for requests; owner logs them manually in `privacy_requests` via Studio.
 
 Acceptance: export downloads JSON containing only the caller's data; deletion of a sole-member account removes the `auth.users` row and scrubs the profile; deletion as sole owner of a shared workspace is refused with guidance; unsubscribe POST with a valid token flips consent, with a tampered token returns 400.
+
+## Amendment 2 (5 Nov 2026) — overrides earlier steps where they conflict
+
+account deletion first cancels subscriptions of workspaces where the user is the sole owner (via the Stripe API, immediately, no refund unless the refund policy says so), then proceeds. The export adds subscription status and invoice links.

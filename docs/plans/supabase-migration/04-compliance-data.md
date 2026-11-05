@@ -15,3 +15,7 @@ Migration `<ts>_compliance.sql`:
 8. pgTAP tests for the trigger (complete metadata onboards; missing age leaves un-onboarded), `prepare_account_deletion` (sole owner refused), `export_my_data` returns only the caller's data.
 
 Acceptance: `pnpm db:reset && pnpm db:test` passes; regenerate types.
+
+## Amendment 2 (5 Nov 2026) — overrides earlier steps where they conflict
+
+retention table adds `trial_claims` (2 years, fraud prevention), `stripe_events` (90 days), and deletion of lapsed workspaces 30 days after read-only.

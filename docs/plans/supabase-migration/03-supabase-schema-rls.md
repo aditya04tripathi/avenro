@@ -18,3 +18,9 @@ Steps:
 6. `pnpm db:start`, `pnpm db:reset`, `pnpm db:test`, `pnpm exec supabase db lint`, then `pnpm db:types` → `lib/supabase/database.types.ts`. Delete `supabase/_extract/` after the migration is committed.
 
 Acceptance: reset applies cleanly; all pgTAP tests pass; `supabase db lint` reports no errors; `select count(*) from pg_tables where schemaname='public' and not rowsecurity` returns 0.
+
+## Amendment 2 (5 Nov 2026) — overrides earlier steps where they conflict
+
+give every `updated_at` column `DEFAULT now()`, and every `created_at`/`updated_at` the type `timestamptz`. Convert `created_by`/`updated_by` `text` columns to `uuid` referencing `profiles(id)`; list them from `domain-columns.txt`. Add the Scrum role helpers, constraints and matrix-based policies above, with pgTAP cases: a DEVELOPER cannot start a sprint; a second PRODUCT_OWNER is rejected; VIEWER combined with DEVELOPER is rejected; a PO cannot edit workflow.
+
+Apply the Scrum role capability matrix and constraints from [APP_PATTERNS.md](APP_PATTERNS.md#scrum-roles) to the RLS in step 4.

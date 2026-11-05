@@ -14,3 +14,7 @@ Steps:
 7. Keep layout, spacing, tokens and components exactly as in `DESIGN.md`; only copy and the removed elements change.
 
 Acceptance: `rg -i "tailark|mist|lorem|shipping|spotify|vercel|trusted by|AI-powered|soc ?2|testimonial"` over `app components lib` returns nothing; visual layout unchanged apart from removed elements (compare screenshots at 375 px and 1280 px).
+
+## Amendment 2 (5 Nov 2026) — overrides earlier steps where they conflict
+
+FAQ price answer → "$8 per active member per month or $80 per year, 30-day free trial, card required, cancel anytime before the trial ends and you pay nothing; viewers and clients are free." CTA → "Start 30-day trial".

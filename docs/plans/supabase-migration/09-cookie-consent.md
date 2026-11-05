@@ -14,3 +14,7 @@ Steps:
 7. SDK audit: write `docs/legal/third-party-audit.md` listing every runtime dependency in `package.json`, whether it ships to the browser, whether it makes network calls, and what data it sends. Expected result: only Supabase JS (first-party backend) contacts the network; `next/font/google` is self-hosted at build time (no Google request at runtime); no analytics. Verify by loading every page in the browser pane and listing network requests to non-local hosts: must be zero.
 
 Acceptance: first visit shows banner; Reject sets cookie with both false; banner gone on reload; footer button reopens; keyboard-only operation works; zero third-party requests.
+
+## Amendment 2 (5 Nov 2026) — overrides earlier steps where they conflict
+
+allowed outbound navigation is `checkout.stripe.com` and `billing.stripe.com` (redirects only). No Stripe.js on Avenro pages. The zero-third-party-requests check stays.

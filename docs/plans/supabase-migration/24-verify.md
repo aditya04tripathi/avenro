@@ -1,6 +1,6 @@
-# Phase 13 — Guard checks and final verification
+# Phase 24 — Guard checks and final verification
 
-Read [README.md](README.md) first: its global rules, decisions and verified facts apply to every step here. Start only after phase 12 is committed.
+Read [README.md](README.md) first: its global rules, decisions and verified facts apply to every step here. Start only after phase 23 is committed.
 
 Skills: `karpathy-guidelines`, `antislop-code`.
 
@@ -15,3 +15,9 @@ Steps:
 2. Full run: `pnpm format && pnpm lint && pnpm typecheck && pnpm check:compliance && pnpm db:reset && pnpm db:test && pnpm build && docker compose up --build -d`, then the manual journey below in the browser pane, then `docker compose down`.
 3. Run `trail check`; resolve conflicts or explain them in the final commit.
 4. Update `README.md` (run locally, scripts, env vars, where legal text lives) and the compliance matrix status column.
+
+## Amendment 2 additions
+
+- Run the full journey from README "Verification" plus phase 13's billing acceptance list again, end to end, in Docker.
+- Re-run every app phase's role walkthrough (14–23) on the final build, using the seed users.
+- `scripts/check-compliance.mjs` also checks that `/pricing` mentions the trial length, the price per member, renewal and how to cancel, and that `lib/billing/*` never logs card data or full email addresses.
