@@ -1,0 +1,17 @@
+# Phase 04 — Compliance data layer
+
+Read [README.md](README.md) first: its global rules, decisions and verified facts apply to every step here. Start only after phase 03 is committed.
+
+Skills: `karpathy-guidelines`, `antislop-code`.
+
+Migration `<ts>_compliance.sql`:
+1. `legal_documents(slug text, version text, published_at timestamptz, primary key(slug, version))`; seed `terms`, `privacy` with version `2026-11-01` (must equal `lib/legal/versions.ts`).
+2. `legal_acceptances(id, profile_id → profiles, document_slug, document_version, accepted_at, primary key id, unique(profile_id, document_slug, document_version))`. No IP address, no user agent (data minimisation; not needed to prove acceptance).
+3. `marketing_consents(profile_id pk → profiles, opted_in boolean not null default false, opted_in_at, opted_out_at, source text check in ('signup','settings','unsubscribe_link'))`.
+4. `privacy_requests(id, profile_id null, kind check in ('access','deletion','correction','objection'), status check in ('received','in_progress','completed','rejected'), received_at, due_at default received_at + interval '30 days', completed_at, notes)`.
+5. Extend `handle_new_user()`: read `raw_user_meta_data` keys `terms_version`, `privacy_version`, `age_confirmed` (boolean), `marketing_opt_in` (boolean). When all three of terms/privacy/age are present and match the current `legal_documents`, set `onboarded_at`, `age_confirmed_at`, insert two `legal_acceptances` and the `marketing_consents` row. Otherwise create the profile un-onboarded (only possible when someone calls the Auth API directly, bypassing the form; such users must finish in `/auth/complete-profile` before any access). Never store the birth year.
+6. RPCs (`SECURITY DEFINER`, `search_path = ''`, check `auth.uid()`): `complete_onboarding(terms_version, privacy_version)`, `accept_current_terms()`, `set_marketing_consent(opted_in, source)`, `export_my_data() returns jsonb` (profile, acceptances, consent, memberships and every row the user authored, found via FK columns pointing to `profiles`; list the columns from `domain-columns.txt`), `prepare_account_deletion() returns text` (refuses with `sole_owner` if the user is the only ACTIVE OWNER of a workspace that has other active members; otherwise archives sole-member workspaces, removes memberships, scrubs the profile to `display_name = 'Deleted user'`, `photo_url = null`, `deleted_at = now()`, deletes marketing consent, inserts a completed `privacy_requests` row).
+7. `create extension if not exists pg_cron;` then retention jobs (defaults; owner confirms in owner actions): daily delete `auth.users` unconfirmed for 7 days (and their profiles); delete `notification` rows older than 90 days; delete `webhook_delivery` older than 30 days; delete `legal_acceptances` and `privacy_requests` of profiles deleted more than 3 years ago; `activity_event`/`audit_event` older than 2 years. Put each job's SQL in a named `SECURITY DEFINER` function (`private.retention_*`) and schedule the function, so pgTAP can call it directly and prove it deletes from `auth.users` with the job's privileges. Write the same table into `docs/legal/data-retention.md`.
+8. pgTAP tests for the trigger (complete metadata onboards; missing age leaves un-onboarded), `prepare_account_deletion` (sole owner refused), `export_my_data` returns only the caller's data.
+
+Acceptance: `pnpm db:reset && pnpm db:test` passes; regenerate types.
