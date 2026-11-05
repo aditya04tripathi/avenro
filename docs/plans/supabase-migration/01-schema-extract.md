@@ -22,3 +22,9 @@ Steps:
 Acceptance: `domain.sql` has 38 `CREATE TABLE` statements (37 domain + `profiles`), all names snake_case, the two constraint triggers, the partial unique indexes, no auth tables, no `_prisma_migrations`. Grep finds no `"[A-Z]` quoted identifier.
 
 Do not: run against the owner's `avenro` database; edit `schema.prisma`.
+
+## Blockers
+
+- Acceptance count contradicts the code (found 5 Nov 2026 during step 3, before any rename). `apps/api/prisma/schema.prisma` has 51 `model` blocks: 43 domain models (including `User`) plus 8 auth-storage models (`Session`, `AuthenticationRateLimit`, `RefreshToken`, `MagicLink`, `EmailToken`, `OidcLogin`, `ProviderAccount`, `ApiKey`). The migrated throwaway DB has the same 43 + 8 + `_prisma_migrations`. The README and this phase expect 38 domain tables and 46 models. Acceptance requires 38 `CREATE TABLE` (37 domain + `profiles`). This cannot pass as written.
+- Five domain models are unaccounted for by the README decision table: the list is in `schema.prisma`, not guessed here. The owner must confirm whether all 43 domain models port to Supabase (and update the README counts) or which five are dropped.
+- Steps 3 to 10 were not executed past inspection. Throwaway container `avenro-schema-extract` was stopped. No file in the repo changed except this section.
