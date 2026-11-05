@@ -15,6 +15,7 @@ Its defining idea is **connected project knowledge**: meetings, decisions, backl
 
 ## Contents
 
+- [Run locally](#run-locally)
 - [Product vision](#product-vision)
 - [Users and differentiators](#users-and-differentiators)
 - [Priorities](#priorities)
@@ -24,6 +25,15 @@ Its defining idea is **connected project knowledge**: meetings, decisions, backl
 - [Engineering principles](#engineering-principles)
 - [MVP definition of done](#mvp-definition-of-done)
 - [References](#references)
+
+## Run locally
+
+1. Start the local Supabase stack: `pnpm db:start`.
+2. Copy `.env.example` to `.env`. Fill the Supabase keys from `pnpm exec supabase status -o env`.
+3. Start the app in Docker: `docker compose up --build`. Open `http://localhost:3000`.
+4. For billing webhooks (phase 13), run in a second terminal: `stripe listen --forward-to localhost:3000/api/stripe/webhook`. Put its signing secret in `STRIPE_WEBHOOK_SECRET`.
+
+Health check: `http://localhost:3000/api/health`.
 
 ## Product vision
 

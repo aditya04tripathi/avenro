@@ -1,2 +1,48 @@
-# Rewritten in phase 06 (Next.js container only). Postgres, Redis and SeaweedFS removed in phase 02.
-services: {}
+# Local run. Supabase runs on the host (`pnpm db:start`); containers reach it via host.docker.internal.
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+    environment:
+      SUPABASE_URL: http://host.docker.internal:54321
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY}
+      UNSUBSCRIBE_TOKEN_SECRET: ${UNSUBSCRIBE_TOKEN_SECRET}
+      SITE_URL: http://localhost:3000
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      TRIAL_CLAIM_SECRET: ${TRIAL_CLAIM_SECRET:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      SMTP_HOST: host.docker.internal
+      SMTP_PORT: "54325"
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  cron:
+    image: alpine:3
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      CRON_SECRET: ${CRON_SECRET:-}
+    # Hourly trigger for /api/cron/run. Route is built in phase 13; 404 until then.
+    command: >
+      sh -c 'apk add --no-cache curl >/dev/null &&
+      echo "0 * * * * curl -fsS -X POST -H \"Authorization: Bearer $$CRON_SECRET\" http://web:3000/api/cron/run" > /etc/crontabs/root &&
+      exec crond -f -L /dev/stdout'
+    restart: unless-stopped
