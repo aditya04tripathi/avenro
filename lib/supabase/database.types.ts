@@ -1211,6 +1211,98 @@ export type Database = {
           },
         ]
       }
+      legal_acceptances: {
+        Row: {
+          accepted_at: string
+          document_slug: string
+          document_version: string
+          id: string
+          profile_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          accepted_at?: string
+          document_slug: string
+          document_version: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          accepted_at?: string
+          document_slug?: string
+          document_version?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_acceptances_document_slug_document_version_fkey"
+            columns: ["document_slug", "document_version"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["slug", "version"]
+          },
+          {
+            foreignKeyName: "legal_acceptances_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_documents: {
+        Row: {
+          published_at: string
+          slug: string
+          version: string
+        }
+        ComputedFields: never
+        Insert: {
+          published_at: string
+          slug: string
+          version: string
+        }
+        Update: {
+          published_at?: string
+          slug?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      marketing_consents: {
+        Row: {
+          opted_in: boolean
+          opted_in_at: string | null
+          opted_out_at: string | null
+          profile_id: string
+          source: string | null
+        }
+        ComputedFields: never
+        Insert: {
+          opted_in?: boolean
+          opted_in_at?: string | null
+          opted_out_at?: string | null
+          profile_id: string
+          source?: string | null
+        }
+        Update: {
+          opted_in?: boolean
+          opted_in_at?: string | null
+          opted_out_at?: string | null
+          profile_id?: string
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_consents_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting: {
         Row: {
           archived_at: string | null
@@ -1690,6 +1782,48 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspace"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      privacy_requests: {
+        Row: {
+          completed_at: string | null
+          due_at: string
+          id: string
+          kind: string
+          notes: string | null
+          profile_id: string | null
+          received_at: string
+          status: string
+        }
+        ComputedFields: never
+        Insert: {
+          completed_at?: string | null
+          due_at?: string
+          id?: string
+          kind: string
+          notes?: string | null
+          profile_id?: string | null
+          received_at?: string
+          status: string
+        }
+        Update: {
+          completed_at?: string | null
+          due_at?: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          profile_id?: string | null
+          received_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "privacy_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3339,6 +3473,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_current_terms: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      complete_onboarding: {
+        Args: {
+          p_age_confirmed?: boolean
+          p_marketing_opt_in?: boolean
+          p_privacy_version: string
+          p_terms_version: string
+        }
+        Returns: undefined
+      }
+      export_my_data: { Args: Record<PropertyKey, never>; Returns: Json }
+      prepare_account_deletion: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      set_marketing_consent: {
+        Args: { p_opted_in: boolean; p_source: string }
+        Returns: undefined
+      }
       uuid_generate_v7: { Args: Record<PropertyKey, never>; Returns: string }
     }
     Enums: {

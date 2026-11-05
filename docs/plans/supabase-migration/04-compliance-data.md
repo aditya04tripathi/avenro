@@ -50,3 +50,7 @@ Use option 3, limited to the account owner's own erasure request:
 Other gaps:
 - `domain-columns.txt` was removed with `supabase/_extract/` in phase 03. Build the `export_my_data()` column list from `information_schema` / `pg_constraint` foreign keys that reference `public.profiles(id)`.
 - Create `lib/legal/versions.ts` now, with `TERMS_VERSION` and `PRIVACY_VERSION` both `"2026-11-01"`, so the seed check works. Phase 08 keeps it.
+
+### Owner choice (5 Nov 2026, overrides the resolution above)
+
+Owner picked "Keep row, scrub" (blocker option 2). Sole-member workspaces are archived, not purged. The caller's `ACTIVE OWNER` row stays so the invariant holds, with `email = ''` and `display_name = 'Deleted user'`. Other memberships are removed. `private.purge_workspace` is not built.
