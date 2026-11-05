@@ -2,7 +2,7 @@
 
 ## Context
 
-Avenro is a pnpm monorepo: `apps/web` (Next.js 16.4.2, React 19.3, Tailwind 4, shadcn/base-ui) and `apps/api` (NestJS 12 + Prisma 7.10 + PostgreSQL). The API implements only auth (register, sign-in, sessions, email verification, password reset, Google OIDC) and health, but `apps/api/prisma/schema.prisma` defines 46 models (38 product-domain, 8 auth-storage). The root `docker-compose.yml` runs Postgres, Redis and SeaweedFS; Redis and SeaweedFS have no integration.
+Avenro is a pnpm monorepo: `apps/web` (Next.js 16.4.2, React 19.3, Tailwind 4, shadcn/base-ui) and `apps/api` (NestJS 12 + Prisma 7.10 + PostgreSQL). The API implements only auth (register, sign-in, sessions, email verification, password reset, Google OIDC) and health, but `apps/api/prisma/schema.prisma` defines 51 models (43 product-domain including `User`, 8 auth-storage). The root `docker-compose.yml` runs Postgres, Redis and SeaweedFS; Redis and SeaweedFS have no integration.
 
 The owner wants:
 
@@ -17,7 +17,7 @@ Decisions taken with the owner (5 Nov 2026):
 | Topic | Decision |
 | --- | --- |
 | Local Supabase | Supabase CLI (`supabase start`). Root `docker-compose.yml` runs only the Next.js container. |
-| Schema scope | Port all 38 domain models to Supabase SQL with RLS. The 8 Nest auth-storage models are replaced by Supabase Auth and are not ported. |
+| Schema scope | Port all 43 domain models to Supabase SQL with RLS. The 8 Nest auth-storage models are replaced by Supabase Auth and are not ported. |
 | Children | Block sign-up under 16 with a neutral age gate. Store only the fact the gate passed, never the birth year. No parental-consent flow is needed because no child data is collected. |
 | Billing | No billing code. Publish free-pricing, refund and renewal policies, plus a release gate for any future paid plan. |
 

@@ -19,7 +19,7 @@ Steps:
 9. Dump: `pg_dump --schema-only --no-owner --no-privileges --schema=public` into `apps/api/prisma/extract/domain.sql` (temporary location, moved in phase 03). Also save a column inventory `domain-columns.txt` from `information_schema.columns`.
 10. Stop the container.
 
-Acceptance: `domain.sql` has 38 `CREATE TABLE` statements (37 domain + `profiles`), all names snake_case, the two constraint triggers, the partial unique indexes, no auth tables, no `_prisma_migrations`. Grep finds no `"[A-Z]` quoted identifier.
+Acceptance: `domain.sql` has 43 `CREATE TABLE` statements (42 domain + `profiles`; corrected 5 Nov 2026, schema.prisma has 51 models), all names snake_case, the two constraint triggers, the partial unique indexes, no auth tables, no `_prisma_migrations`. Grep finds no `"[A-Z]` quoted identifier.
 
 Do not: run against the owner's `avenro` database; edit `schema.prisma`.
 
@@ -28,3 +28,5 @@ Do not: run against the owner's `avenro` database; edit `schema.prisma`.
 - Acceptance count contradicts the code (found 5 Nov 2026 during step 3, before any rename). `apps/api/prisma/schema.prisma` has 51 `model` blocks: 43 domain models (including `User`) plus 8 auth-storage models (`Session`, `AuthenticationRateLimit`, `RefreshToken`, `MagicLink`, `EmailToken`, `OidcLogin`, `ProviderAccount`, `ApiKey`). The migrated throwaway DB has the same 43 + 8 + `_prisma_migrations`. The README and this phase expect 38 domain tables and 46 models. Acceptance requires 38 `CREATE TABLE` (37 domain + `profiles`). This cannot pass as written.
 - Five domain models are unaccounted for by the README decision table: the list is in `schema.prisma`, not guessed here. The owner must confirm whether all 43 domain models port to Supabase (and update the README counts) or which five are dropped.
 - Steps 3 to 10 were not executed past inspection. Throwaway container `avenro-schema-extract` was stopped. No file in the repo changed except this section.
+
+Resolved 5 Nov 2026 by the orchestrator: the plan miscounted. Port all 43 domain models (owner decision "port all"). Acceptance is corrected above to 43 `CREATE TABLE` statements. Continue from step 3.
