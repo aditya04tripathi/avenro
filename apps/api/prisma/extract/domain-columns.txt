@@ -1,0 +1,560 @@
+action_item|id|uuid|NO|uuid_generate_v7()
+action_item|workspace_id|uuid|NO|
+action_item|project_id|uuid|NO|
+action_item|source_meeting_id|uuid|YES|
+action_item|source_minutes_id|uuid|YES|
+action_item|source_decision_id|uuid|YES|
+action_item|title|text|NO|
+action_item|description|text|NO|''::text
+action_item|status|USER-DEFINED|NO|'OPEN'::action_item_status
+action_item|assignee_id|uuid|YES|
+action_item|due_at|timestamp without time zone|YES|
+action_item|completed_at|timestamp without time zone|YES|
+action_item|linked_issue_id|uuid|YES|
+action_item|archived_at|timestamp without time zone|YES|
+action_item|archived_by|text|YES|
+action_item|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+action_item|created_by|text|NO|
+action_item|updated_at|timestamp without time zone|NO|
+action_item|updated_by|text|NO|
+action_item|revision|integer|NO|1
+activity_event|id|uuid|NO|uuid_generate_v7()
+activity_event|workspace_id|uuid|NO|
+activity_event|project_id|uuid|YES|
+activity_event|entity_type|text|NO|
+activity_event|entity_id|text|NO|
+activity_event|action|text|NO|
+activity_event|actor_id|uuid|NO|
+activity_event|changes|jsonb|NO|
+activity_event|occurred_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+audit_event|id|uuid|NO|uuid_generate_v7()
+audit_event|workspace_id|uuid|NO|
+audit_event|project_id|uuid|YES|
+audit_event|actor_id|uuid|NO|
+audit_event|action|text|NO|
+audit_event|entity_path|text|NO|
+audit_event|request_id|text|NO|
+audit_event|metadata|jsonb|NO|
+audit_event|occurred_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+board_column|id|uuid|NO|uuid_generate_v7()
+board_column|workspace_id|uuid|NO|
+board_column|project_id|uuid|NO|
+board_column|board_config_id|uuid|NO|
+board_column|workflow_status_id|uuid|YES|
+board_column|legacy_id|text|YES|
+board_column|name|text|NO|
+board_column|rank|text|NO|
+board_column|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+board_column|created_by|text|NO|
+board_config|id|uuid|NO|uuid_generate_v7()
+board_config|workspace_id|uuid|NO|
+board_config|project_id|uuid|NO|
+board_config|name|text|NO|
+board_config|kind|USER-DEFINED|NO|
+board_config|filter|jsonb|NO|
+board_config|archived_at|timestamp without time zone|YES|
+board_config|archived_by|text|YES|
+board_config|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+board_config|created_by|text|NO|
+board_config|updated_at|timestamp without time zone|NO|
+board_config|updated_by|text|NO|
+board_config|revision|integer|NO|1
+change_request|id|uuid|NO|uuid_generate_v7()
+change_request|workspace_id|uuid|NO|
+change_request|project_id|uuid|NO|
+change_request|title|text|NO|
+change_request|description|text|NO|
+change_request|status|USER-DEFINED|NO|'PROPOSED'::change_request_status
+change_request|requester_id|uuid|NO|
+change_request|approver_id|uuid|YES|
+change_request|decision_at|timestamp without time zone|YES|
+change_request|linked_issue_ids|ARRAY|YES|
+change_request|archived_at|timestamp without time zone|YES|
+change_request|archived_by|text|YES|
+change_request|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+change_request|created_by|text|NO|
+change_request|updated_at|timestamp without time zone|NO|
+change_request|updated_by|text|NO|
+client_portal_item|id|uuid|NO|uuid_generate_v7()
+client_portal_item|workspace_id|uuid|NO|
+client_portal_item|project_id|uuid|NO|
+client_portal_item|source_collection|text|NO|
+client_portal_item|source_id|text|NO|
+client_portal_item|title|text|NO|
+client_portal_item|summary|text|NO|
+client_portal_item|content|jsonb|NO|
+client_portal_item|status|USER-DEFINED|NO|'PUBLISHED'::portal_status
+client_portal_item|published_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+client_portal_item|published_by|uuid|NO|
+client_portal_item|source_updated_at|timestamp without time zone|NO|
+decision|id|uuid|NO|uuid_generate_v7()
+decision|workspace_id|uuid|NO|
+decision|project_id|uuid|NO|
+decision|meeting_id|uuid|YES|
+decision|minutes_id|uuid|YES|
+decision|title|text|NO|
+decision|context|text|NO|
+decision|rationale|text|NO|
+decision|status|USER-DEFINED|NO|'PROPOSED'::decision_status
+decision|approver_ids|ARRAY|YES|
+decision|decided_at|timestamp without time zone|YES|
+decision|supersedes_id|uuid|YES|
+decision|linked_record_ids|ARRAY|YES|
+decision|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+decision|created_by|text|NO|
+decision|updated_at|timestamp without time zone|NO|
+decision|updated_by|text|NO|
+decision|revision|integer|NO|1
+document_folder|id|uuid|NO|uuid_generate_v7()
+document_folder|workspace_id|uuid|NO|
+document_folder|project_id|uuid|NO|
+document_folder|name|text|NO|
+document_folder|parent_folder_id|uuid|YES|
+document_folder|rank|text|NO|
+document_folder|archived_at|timestamp without time zone|YES|
+document_folder|archived_by|text|YES|
+document_folder|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+document_folder|created_by|text|NO|
+document_folder|updated_at|timestamp without time zone|NO|
+document_folder|updated_by|text|NO|
+document_version|id|uuid|NO|uuid_generate_v7()
+document_version|workspace_id|uuid|NO|
+document_version|project_id|uuid|NO|
+document_version|document_id|uuid|NO|
+document_version|version|integer|NO|
+document_version|title|text|NO|
+document_version|body|text|NO|
+document_version|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+document_version|created_by|text|NO|
+integration|id|uuid|NO|uuid_generate_v7()
+integration|workspace_id|uuid|NO|
+integration|project_id|uuid|NO|
+integration|provider|USER-DEFINED|NO|
+integration|status|USER-DEFINED|NO|'ACTIVE'::integration_status
+integration|external_id|text|NO|
+integration|settings|jsonb|NO|
+integration|secret_ref|text|YES|
+integration|connected_by|uuid|NO|
+integration|archived_at|timestamp without time zone|YES|
+integration|archived_by|text|YES|
+integration|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+integration|created_by|text|NO|
+integration|updated_at|timestamp without time zone|NO|
+integration|updated_by|text|NO|
+issue|id|uuid|NO|uuid_generate_v7()
+issue|workspace_id|uuid|NO|
+issue|project_id|uuid|NO|
+issue|key|text|NO|
+issue|number|integer|NO|
+issue|type|USER-DEFINED|NO|
+issue|title|text|NO|
+issue|description|text|NO|''::text
+issue|acceptance_criteria|ARRAY|YES|
+issue|priority|USER-DEFINED|NO|'MEDIUM'::priority
+issue|rank|text|NO|
+issue|assignee_id|uuid|YES|
+issue|reporter_id|uuid|NO|
+issue|parent_id|uuid|YES|
+issue|epic_id|uuid|YES|
+issue|sprint_id|uuid|YES|
+issue|estimate|double precision|YES|
+issue|labels|ARRAY|YES|
+issue|due_at|timestamp without time zone|YES|
+issue|archived_at|timestamp without time zone|YES|
+issue|archived_by|text|YES|
+issue|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+issue|created_by|text|NO|
+issue|updated_at|timestamp without time zone|NO|
+issue|updated_by|text|NO|
+issue|workflow_status_id|uuid|NO|
+issue|revision|integer|NO|1
+issue_comment|id|uuid|NO|uuid_generate_v7()
+issue_comment|workspace_id|uuid|NO|
+issue_comment|project_id|uuid|NO|
+issue_comment|issue_id|uuid|NO|
+issue_comment|author_id|uuid|NO|
+issue_comment|body|text|NO|
+issue_comment|edited_at|timestamp without time zone|YES|
+issue_comment|deleted_at|timestamp without time zone|YES|
+issue_comment|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+issue_comment|created_by|text|NO|
+issue_comment|updated_at|timestamp without time zone|NO|
+issue_comment|updated_by|text|NO|
+issue_dependency|id|uuid|NO|uuid_generate_v7()
+issue_dependency|workspace_id|uuid|NO|
+issue_dependency|project_id|uuid|NO|
+issue_dependency|blocking_issue_id|uuid|NO|
+issue_dependency|blocked_issue_id|uuid|NO|
+issue_dependency|type|USER-DEFINED|NO|
+issue_dependency|archived_at|timestamp without time zone|YES|
+issue_dependency|archived_by|text|YES|
+issue_dependency|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+issue_dependency|created_by|text|NO|
+issue_dependency|updated_at|timestamp without time zone|NO|
+issue_dependency|updated_by|text|NO|
+meeting|id|uuid|NO|uuid_generate_v7()
+meeting|workspace_id|uuid|NO|
+meeting|project_id|uuid|NO|
+meeting|sprint_id|uuid|YES|
+meeting|title|text|NO|
+meeting|type|USER-DEFINED|NO|
+meeting|status|USER-DEFINED|NO|'SCHEDULED'::meeting_status
+meeting|starts_at|timestamp without time zone|NO|
+meeting|ends_at|timestamp without time zone|NO|
+meeting|organizer_id|uuid|NO|
+meeting|facilitator_id|uuid|YES|
+meeting|minute_taker_id|uuid|YES|
+meeting|participant_ids|ARRAY|YES|
+meeting|location|text|NO|''::text
+meeting|meeting_url|text|YES|
+meeting|archived_at|timestamp without time zone|YES|
+meeting|archived_by|text|YES|
+meeting|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+meeting|created_by|text|NO|
+meeting|updated_at|timestamp without time zone|NO|
+meeting|updated_by|text|NO|
+meeting|revision|integer|NO|1
+meeting_agenda_item|id|uuid|NO|uuid_generate_v7()
+meeting_agenda_item|workspace_id|uuid|NO|
+meeting_agenda_item|project_id|uuid|NO|
+meeting_agenda_item|meeting_id|uuid|NO|
+meeting_agenda_item|title|text|NO|
+meeting_agenda_item|description|text|NO|''::text
+meeting_agenda_item|rank|text|NO|
+meeting_agenda_item|presenter_id|text|YES|
+meeting_agenda_item|duration_minutes|integer|YES|
+meeting_agenda_item|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+meeting_agenda_item|created_by|text|NO|
+meeting_agenda_item|updated_at|timestamp without time zone|NO|
+meeting_agenda_item|updated_by|text|NO|
+meeting_minutes|id|uuid|NO|uuid_generate_v7()
+meeting_minutes|workspace_id|uuid|NO|
+meeting_minutes|project_id|uuid|NO|
+meeting_minutes|meeting_id|uuid|NO|
+meeting_minutes|status|USER-DEFINED|NO|'DRAFT'::minutes_status
+meeting_minutes|version|integer|NO|1
+meeting_minutes|summary|text|NO|
+meeting_minutes|attendance|jsonb|NO|
+meeting_minutes|finalized_at|timestamp without time zone|YES|
+meeting_minutes|finalized_by|text|YES|
+meeting_minutes|supersedes_id|uuid|YES|
+meeting_minutes|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+meeting_minutes|created_by|text|NO|
+meeting_minutes|updated_at|timestamp without time zone|NO|
+meeting_minutes|updated_by|text|NO|
+meeting_minutes|revision|integer|NO|1
+meeting_minutes_version|id|uuid|NO|uuid_generate_v7()
+meeting_minutes_version|workspace_id|uuid|NO|
+meeting_minutes_version|project_id|uuid|NO|
+meeting_minutes_version|minutes_id|uuid|NO|
+meeting_minutes_version|version|integer|NO|
+meeting_minutes_version|snapshot|jsonb|NO|
+meeting_minutes_version|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+meeting_minutes_version|created_by|text|NO|
+milestone|id|uuid|NO|uuid_generate_v7()
+milestone|workspace_id|uuid|NO|
+milestone|project_id|uuid|NO|
+milestone|title|text|NO|
+milestone|description|text|NO|''::text
+milestone|status|USER-DEFINED|NO|'PLANNED'::milestone_status
+milestone|due_at|timestamp without time zone|YES|
+milestone|completed_at|timestamp without time zone|YES|
+milestone|issue_ids|ARRAY|YES|
+milestone|archived_at|timestamp without time zone|YES|
+milestone|archived_by|text|YES|
+milestone|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+milestone|created_by|text|NO|
+milestone|updated_at|timestamp without time zone|NO|
+milestone|updated_by|text|NO|
+notification|id|uuid|NO|uuid_generate_v7()
+notification|workspace_id|uuid|NO|
+notification|recipient_id|uuid|NO|
+notification|type|text|NO|
+notification|title|text|NO|
+notification|body|text|NO|
+notification|target_path|text|YES|
+notification|read_at|timestamp without time zone|YES|
+notification|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+profiles|id|uuid|NO|uuid_generate_v7()
+profiles|display_name|text|NO|''::text
+profiles|photo_url|text|YES|
+profiles|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+profiles|updated_at|timestamp without time zone|NO|
+profiles|deleted_at|timestamp with time zone|YES|
+profiles|onboarded_at|timestamp with time zone|YES|
+profiles|age_confirmed_at|timestamp with time zone|YES|
+project|id|uuid|NO|uuid_generate_v7()
+project|workspace_id|uuid|NO|
+project|name|text|NO|
+project|key|text|NO|
+project|description|text|NO|''::text
+project|objective|text|NO|''::text
+project|template|USER-DEFINED|NO|'SCRUM'::project_template
+project|status|USER-DEFINED|NO|'ACTIVE'::project_status
+project|lead_id|uuid|NO|
+project|next_issue_number|integer|NO|1
+project|timezone|text|NO|'UTC'::text
+project|archived_at|timestamp without time zone|YES|
+project|archived_by|text|YES|
+project|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+project|created_by|uuid|NO|
+project|updated_at|timestamp without time zone|NO|
+project|updated_by|text|NO|
+project_document|id|uuid|NO|uuid_generate_v7()
+project_document|workspace_id|uuid|NO|
+project_document|project_id|uuid|NO|
+project_document|folder_id|uuid|YES|
+project_document|title|text|NO|
+project_document|body|text|NO|
+project_document|status|USER-DEFINED|NO|'DRAFT'::document_status
+project_document|current_version|integer|NO|1
+project_document|archived_at|timestamp without time zone|YES|
+project_document|archived_by|text|YES|
+project_document|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+project_document|created_by|text|NO|
+project_document|updated_at|timestamp without time zone|NO|
+project_document|updated_by|text|NO|
+project_document|revision|integer|NO|1
+project_goal|id|uuid|NO|uuid_generate_v7()
+project_goal|workspace_id|uuid|NO|
+project_goal|project_id|uuid|NO|
+project_goal|title|text|NO|
+project_goal|description|text|NO|''::text
+project_goal|status|USER-DEFINED|NO|'NOT_STARTED'::goal_status
+project_goal|target_at|timestamp without time zone|YES|
+project_goal|owner_id|uuid|YES|
+project_goal|archived_at|timestamp without time zone|YES|
+project_goal|archived_by|text|YES|
+project_goal|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+project_goal|created_by|text|NO|
+project_goal|updated_at|timestamp without time zone|NO|
+project_goal|updated_by|text|NO|
+project_key_reservation|id|uuid|NO|uuid_generate_v7()
+project_key_reservation|workspace_id|uuid|NO|
+project_key_reservation|project_id|uuid|NO|
+project_key_reservation|key|text|NO|
+project_key_reservation|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+project_key_reservation|created_by|text|NO|
+project_membership|id|uuid|NO|uuid_generate_v7()
+project_membership|workspace_id|uuid|NO|
+project_membership|project_id|uuid|NO|
+project_membership|user_id|uuid|NO|
+project_membership|roles|ARRAY|YES|
+project_membership|status|USER-DEFINED|NO|'ACTIVE'::membership_status
+project_membership|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+project_membership|created_by|text|NO|
+project_membership|updated_at|timestamp without time zone|NO|
+project_membership|updated_by|text|NO|
+project_status_update|id|uuid|NO|uuid_generate_v7()
+project_status_update|workspace_id|uuid|NO|
+project_status_update|project_id|uuid|NO|
+project_status_update|status|USER-DEFINED|NO|
+project_status_update|summary|text|NO|
+project_status_update|accomplishments|ARRAY|YES|
+project_status_update|risks|ARRAY|YES|
+project_status_update|author_id|uuid|NO|
+project_status_update|reported_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+project_status_update|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+project_status_update|created_by|text|NO|
+project_status_update|updated_at|timestamp without time zone|NO|
+project_status_update|updated_by|text|NO|
+requirement|id|uuid|NO|uuid_generate_v7()
+requirement|workspace_id|uuid|NO|
+requirement|project_id|uuid|NO|
+requirement|key|text|NO|
+requirement|title|text|NO|
+requirement|description|text|NO|
+requirement|kind|USER-DEFINED|NO|
+requirement|status|USER-DEFINED|NO|'PROPOSED'::requirement_status
+requirement|priority|USER-DEFINED|NO|'MEDIUM'::priority
+requirement|linked_issue_ids|ARRAY|YES|
+requirement|source_document_id|uuid|YES|
+requirement|archived_at|timestamp without time zone|YES|
+requirement|archived_by|text|YES|
+requirement|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+requirement|created_by|text|NO|
+requirement|updated_at|timestamp without time zone|NO|
+requirement|updated_by|text|NO|
+retrospective|id|uuid|NO|uuid_generate_v7()
+retrospective|workspace_id|uuid|NO|
+retrospective|project_id|uuid|NO|
+retrospective|sprint_id|uuid|NO|
+retrospective|meeting_id|uuid|YES|
+retrospective|template|USER-DEFINED|NO|'WENT_WELL_IMPROVE_ACTIONS'::retrospective_template
+retrospective|status|USER-DEFINED|NO|'OPEN'::retrospective_status
+retrospective|facilitator_id|uuid|NO|
+retrospective|closed_at|timestamp without time zone|YES|
+retrospective|archived_at|timestamp without time zone|YES|
+retrospective|archived_by|text|YES|
+retrospective|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+retrospective|created_by|text|NO|
+retrospective|updated_at|timestamp without time zone|NO|
+retrospective|updated_by|text|NO|
+retrospective_feedback|id|uuid|NO|uuid_generate_v7()
+retrospective_feedback|workspace_id|uuid|NO|
+retrospective_feedback|project_id|uuid|NO|
+retrospective_feedback|retrospective_id|uuid|NO|
+retrospective_feedback|author_id|uuid|YES|
+retrospective_feedback|category|USER-DEFINED|NO|
+retrospective_feedback|body|text|NO|
+retrospective_feedback|anonymous|boolean|NO|false
+retrospective_feedback|vote_count|integer|NO|0
+retrospective_feedback|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+retrospective_feedback|created_by|text|NO|
+retrospective_feedback|updated_at|timestamp without time zone|NO|
+retrospective_feedback|updated_by|text|NO|
+risk|id|uuid|NO|uuid_generate_v7()
+risk|workspace_id|uuid|NO|
+risk|project_id|uuid|NO|
+risk|title|text|NO|
+risk|description|text|NO|
+risk|status|USER-DEFINED|NO|'IDENTIFIED'::risk_status
+risk|probability|integer|NO|
+risk|impact|integer|NO|
+risk|owner_id|uuid|YES|
+risk|mitigation_plan|text|NO|''::text
+risk|review_at|timestamp without time zone|YES|
+risk|archived_at|timestamp without time zone|YES|
+risk|archived_by|text|YES|
+risk|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+risk|created_by|text|NO|
+risk|updated_at|timestamp without time zone|NO|
+risk|updated_by|text|NO|
+saved_filter|id|uuid|NO|uuid_generate_v7()
+saved_filter|workspace_id|uuid|NO|
+saved_filter|project_id|uuid|YES|
+saved_filter|owner_id|uuid|NO|
+saved_filter|name|text|NO|
+saved_filter|query|jsonb|NO|
+saved_filter|shared|boolean|NO|false
+saved_filter|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+saved_filter|created_by|text|NO|
+saved_filter|updated_at|timestamp without time zone|NO|
+saved_filter|updated_by|text|NO|
+sprint|id|uuid|NO|uuid_generate_v7()
+sprint|workspace_id|uuid|NO|
+sprint|project_id|uuid|NO|
+sprint|name|text|NO|
+sprint|goal|text|NO|''::text
+sprint|status|USER-DEFINED|NO|'PLANNED'::sprint_status
+sprint|start_at|timestamp without time zone|YES|
+sprint|end_at|timestamp without time zone|YES|
+sprint|started_at|timestamp without time zone|YES|
+sprint|completed_at|timestamp without time zone|YES|
+sprint|committed_at|timestamp without time zone|YES|
+sprint|archived_at|timestamp without time zone|YES|
+sprint|archived_by|text|YES|
+sprint|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+sprint|created_by|text|NO|
+sprint|updated_at|timestamp without time zone|NO|
+sprint|updated_by|text|NO|
+sprint|revision|integer|NO|1
+sprint_scope_change|id|uuid|NO|uuid_generate_v7()
+sprint_scope_change|workspace_id|uuid|NO|
+sprint_scope_change|project_id|uuid|NO|
+sprint_scope_change|sprint_id|uuid|NO|
+sprint_scope_change|issue_id|uuid|NO|
+sprint_scope_change|change|USER-DEFINED|NO|
+sprint_scope_change|actor_id|text|NO|
+sprint_scope_change|occurred_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+sprint_snapshot|id|uuid|NO|uuid_generate_v7()
+sprint_snapshot|workspace_id|uuid|NO|
+sprint_snapshot|project_id|uuid|NO|
+sprint_snapshot|sprint_id|uuid|NO|
+sprint_snapshot|goal|text|NO|
+sprint_snapshot|issue_ids|ARRAY|YES|
+sprint_snapshot|completed_issue_ids|ARRAY|YES|
+sprint_snapshot|story_points_committed|double precision|NO|
+sprint_snapshot|story_points_completed|double precision|NO|
+sprint_snapshot|snapshot_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+stakeholder|id|uuid|NO|uuid_generate_v7()
+stakeholder|workspace_id|uuid|NO|
+stakeholder|project_id|uuid|NO|
+stakeholder|name|text|NO|
+stakeholder|email|text|YES|
+stakeholder|organisation|text|NO|
+stakeholder|role|text|NO|
+stakeholder|influence|USER-DEFINED|NO|'MEDIUM'::influence_level
+stakeholder|interest|USER-DEFINED|NO|'MEDIUM'::interest_level
+stakeholder|archived_at|timestamp without time zone|YES|
+stakeholder|archived_by|text|YES|
+stakeholder|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+stakeholder|created_by|text|NO|
+stakeholder|updated_at|timestamp without time zone|NO|
+stakeholder|updated_by|text|NO|
+storage_object|id|uuid|NO|uuid_generate_v7()
+storage_object|workspace_id|uuid|NO|
+storage_object|project_id|uuid|YES|
+storage_object|bucket|text|NO|
+storage_object|key|text|NO|
+storage_object|file_name|text|NO|
+storage_object|content_type|text|NO|
+storage_object|size_bytes|bigint|NO|
+storage_object|etag|text|YES|
+storage_object|uploader_id|uuid|NO|
+storage_object|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+storage_object|updated_at|timestamp without time zone|NO|
+storage_object|archived_at|timestamp without time zone|YES|
+webhook_delivery|id|uuid|NO|uuid_generate_v7()
+webhook_delivery|workspace_id|uuid|NO|
+webhook_delivery|project_id|uuid|NO|
+webhook_delivery|integration_id|uuid|NO|
+webhook_delivery|idempotency_key|text|NO|
+webhook_delivery|event_type|text|NO|
+webhook_delivery|status|USER-DEFINED|NO|'PENDING'::webhook_status
+webhook_delivery|attempts|integer|NO|0
+webhook_delivery|received_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+webhook_delivery|completed_at|timestamp without time zone|YES|
+workflow_status|id|uuid|NO|uuid_generate_v7()
+workflow_status|workspace_id|uuid|NO|
+workflow_status|project_id|uuid|NO|
+workflow_status|name|text|NO|
+workflow_status|category|USER-DEFINED|NO|
+workflow_status|rank|text|NO|
+workflow_status|color|text|NO|
+workflow_status|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+workflow_status|created_by|text|NO|
+workflow_status|updated_at|timestamp without time zone|NO|
+workflow_status|updated_by|text|NO|
+workflow_status|revision|integer|NO|1
+workflow_transition|id|uuid|NO|uuid_generate_v7()
+workflow_transition|workspace_id|uuid|NO|
+workflow_transition|project_id|uuid|NO|
+workflow_transition|from_status_id|uuid|NO|
+workflow_transition|to_status_id|uuid|NO|
+workflow_transition|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+workspace|id|uuid|NO|uuid_generate_v7()
+workspace|name|text|NO|
+workspace|slug|text|NO|
+workspace|description|text|NO|''::text
+workspace|owner_id|uuid|NO|
+workspace|status|USER-DEFINED|NO|'ACTIVE'::workspace_status
+workspace|archived_at|timestamp without time zone|YES|
+workspace|archived_by|text|YES|
+workspace|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+workspace|created_by|text|NO|
+workspace|updated_at|timestamp without time zone|NO|
+workspace|updated_by|text|NO|
+workspace_invitation|id|uuid|NO|uuid_generate_v7()
+workspace_invitation|workspace_id|uuid|NO|
+workspace_invitation|email|text|NO|
+workspace_invitation|role|USER-DEFINED|NO|
+workspace_invitation|status|USER-DEFINED|NO|'PENDING'::invitation_status
+workspace_invitation|token_hash|text|NO|
+workspace_invitation|expires_at|timestamp without time zone|NO|
+workspace_invitation|accepted_by|text|YES|
+workspace_invitation|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+workspace_invitation|created_by|text|NO|
+workspace_invitation|updated_at|timestamp without time zone|NO|
+workspace_invitation|updated_by|text|NO|
+workspace_member|id|uuid|NO|uuid_generate_v7()
+workspace_member|workspace_id|uuid|NO|
+workspace_member|user_id|uuid|NO|
+workspace_member|email|text|NO|
+workspace_member|display_name|text|NO|
+workspace_member|role|USER-DEFINED|NO|'MEMBER'::workspace_role
+workspace_member|status|USER-DEFINED|NO|'ACTIVE'::membership_status
+workspace_member|joined_at|timestamp without time zone|YES|
+workspace_member|invited_by|text|YES|
+workspace_member|created_at|timestamp without time zone|NO|CURRENT_TIMESTAMP
+workspace_member|updated_at|timestamp without time zone|NO|
