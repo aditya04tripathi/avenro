@@ -1,0 +1,33 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-hud": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/aditya/Developer/personal/avenro/third-party/claude-hud"
+      }
+    },
+    "openai-codex": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/aditya/Developer/personal/avenro/third-party/codex-plugin-cc"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "claude-hud@claude-hud": true,
+    "codex@openai-codex": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.trail/hook.cjs\" session-start || exit 0",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
